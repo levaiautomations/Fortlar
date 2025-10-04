@@ -15,6 +15,27 @@ class ProdutoRepository(IProdutoRepository, BaseRepository[Produto]):
     def __init__(self):
         super().__init__(Produto)
 
+    # Implementação dos métodos abstratos do IProdutoRepository
+    def create(self, produto: Produto, session: Session) -> Produto:
+        """Cria um novo produto"""
+        return super().create(produto, session)
+
+    def get_by_id(self, produto_id: int, session: Session) -> Optional[Produto]:
+        """Busca produto por ID"""
+        return super().get_by_id(produto_id, session)
+
+    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[Produto]:
+        """Lista todos os produtos"""
+        return super().get_all(session, skip, limit)
+
+    def update(self, produto: Produto, session: Session) -> Produto:
+        """Atualiza um produto"""
+        return super().update(produto, session)
+
+    def delete(self, produto_id: int, session: Session) -> bool:
+        """Deleta um produto"""
+        return super().delete(produto_id, session)
+
     def get_by_codigo(self, codigo: str, session: Session) -> Optional[Produto]:
         """Busca produto por código"""
         return session.query(Produto).filter(Produto.codigo == codigo).first()

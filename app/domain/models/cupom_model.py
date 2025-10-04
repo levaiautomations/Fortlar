@@ -1,13 +1,14 @@
-from sqlalchemy import Integer, String, Boolean, Date, Numeric, CheckConstraint, Enum as SAEnum
+from sqlalchemy import Integer, String, Boolean, Date, Numeric, CheckConstraint, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional, List
 from decimal import Decimal
 from datetime import date
+from enum import Enum as PyEnum
 
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
 
-class TipoCupomEnum(str, SAEnum):
+class TipoCupomEnum(PyEnum):
     """Enum para tipo de cupom"""
     PERCENTUAL = 'percentual'
     VALOR_FIXO = 'valor_fixo'
@@ -20,7 +21,7 @@ class Cupom(Base, TimestampMixin, BaseMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     codigo: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
     tipo: Mapped[TipoCupomEnum] = mapped_column(
-        SAEnum(TipoCupomEnum, name='tipo_cupom'), 
+        Enum(TipoCupomEnum, name='tipo_cupom'), 
         nullable=False
     )
     valor: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)

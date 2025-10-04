@@ -14,6 +14,27 @@ class CategoriaRepository(ICategoriaRepository, BaseRepository[Categoria]):
     def __init__(self):
         super().__init__(Categoria)
 
+    # Implementação dos métodos abstratos do ICategoriaRepository
+    def create(self, categoria: Categoria, session: Session) -> Categoria:
+        """Cria uma nova categoria"""
+        return super().create(categoria, session)
+
+    def get_by_id(self, categoria_id: int, session: Session) -> Optional[Categoria]:
+        """Busca categoria por ID"""
+        return super().get_by_id(categoria_id, session)
+
+    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[Categoria]:
+        """Lista todas as categorias"""
+        return super().get_all(session, skip, limit)
+
+    def update(self, categoria: Categoria, session: Session) -> Categoria:
+        """Atualiza uma categoria"""
+        return super().update(categoria, session)
+
+    def delete(self, categoria_id: int, session: Session) -> bool:
+        """Deleta uma categoria"""
+        return super().delete(categoria_id, session)
+
     def get_by_name(self, name: str, session: Session) -> Optional[Categoria]:
         """Busca categoria por nome exato"""
         return session.query(Categoria).filter(Categoria.nome == name).first()

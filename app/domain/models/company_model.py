@@ -36,3 +36,4 @@ class Company(Base, TimestampMixin, BaseMixin):
         cascade='all,delete-orphan'
     )
     email_token: Mapped[Optional['EmailToken']] = relationship('EmailToken', back_populates='empresa')
+    pedidos: Mapped[List['Pedido']] = relationship('Pedido', back_populates='cliente')

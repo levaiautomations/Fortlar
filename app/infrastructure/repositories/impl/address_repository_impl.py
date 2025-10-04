@@ -14,6 +14,27 @@ class AddressRepository(IAddressRepository, BaseRepository[Address]):
     def __init__(self):
         super().__init__(Address)
 
+    # Implementação dos métodos abstratos do IAddressRepository
+    def create(self, address: Address, session: Session) -> Address:
+        """Cria um novo endereço"""
+        return super().create(address, session)
+
+    def get_by_id(self, address_id: int, session: Session) -> Optional[Address]:
+        """Busca endereço por ID"""
+        return super().get_by_id(address_id, session)
+
+    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[Address]:
+        """Lista todos os endereços"""
+        return super().get_all(session, skip, limit)
+
+    def update(self, address: Address, session: Session) -> Address:
+        """Atualiza um endereço"""
+        return super().update(address, session)
+
+    def delete(self, address_id: int, session: Session) -> bool:
+        """Deleta um endereço"""
+        return super().delete(address_id, session)
+
     def get_by_company(self, company_id: int, session: Session) -> List[Address]:
         """Busca endereços por empresa"""
         return session.query(Address).filter(Address.id_empresa == company_id).all()

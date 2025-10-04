@@ -54,9 +54,8 @@ application = FastAPI(
     - Validação de dados obrigatórios
     """,
     version="1.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    root_path="/api",
+    docs_url="/docs",
+    redoc_url="/redoc",
     contact={
         "name": "Equipe Fortlar",
         "email": "contato@fortlar.com",

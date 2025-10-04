@@ -1,14 +1,15 @@
-from sqlalchemy import Integer, DateTime, Numeric, ForeignKey, Enum as SAEnum
+from sqlalchemy import Integer, DateTime, Numeric, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from typing import Optional, List
 from decimal import Decimal
 from datetime import datetime
+from enum import Enum as PyEnum
 
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
 
-class PedidoStatusEnum(str, SAEnum):
+class PedidoStatusEnum(PyEnum):
     """Enum para status do pedido"""
     PENDENTE = 'pendente'
     CONFIRMADO = 'confirmado'
@@ -31,9 +32,9 @@ class Pedido(Base, TimestampMixin, BaseMixin):
         nullable=False
     )
     status: Mapped[PedidoStatusEnum] = mapped_column(
-        SAEnum(PedidoStatusEnum, name='pedido_status'), 
+        Enum(PedidoStatusEnum, name='pedido_status'), 
         nullable=False, 
-        server_default=PedidoStatusEnum.PENDENTE
+        default=PedidoStatusEnum.PENDENTE
     )
     valor_total: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 

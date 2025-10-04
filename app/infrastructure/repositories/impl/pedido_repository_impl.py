@@ -16,6 +16,27 @@ class PedidoRepository(IPedidoRepository, BaseRepository[Pedido]):
     def __init__(self):
         super().__init__(Pedido)
 
+    # Implementação dos métodos abstratos do IPedidoRepository
+    def create(self, pedido: Pedido, session: Session) -> Pedido:
+        """Cria um novo pedido"""
+        return super().create(pedido, session)
+
+    def get_by_id(self, pedido_id: int, session: Session) -> Optional[Pedido]:
+        """Busca pedido por ID"""
+        return super().get_by_id(pedido_id, session)
+
+    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[Pedido]:
+        """Lista todos os pedidos"""
+        return super().get_all(session, skip, limit)
+
+    def update(self, pedido: Pedido, session: Session) -> Pedido:
+        """Atualiza um pedido"""
+        return super().update(pedido, session)
+
+    def delete(self, pedido_id: int, session: Session) -> bool:
+        """Deleta um pedido"""
+        return super().delete(pedido_id, session)
+
     def get_by_cliente(self, cliente_id: int, session: Session) -> List[Pedido]:
         """Busca pedidos por cliente"""
         return session.query(Pedido).filter(Pedido.id_cliente == cliente_id).all()

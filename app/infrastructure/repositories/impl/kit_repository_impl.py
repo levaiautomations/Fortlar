@@ -15,6 +15,27 @@ class KitRepository(IKitRepository, BaseRepository[Kit]):
     def __init__(self):
         super().__init__(Kit)
 
+    # Implementação dos métodos abstratos do IKitRepository
+    def create(self, kit: Kit, session: Session) -> Kit:
+        """Cria um novo kit"""
+        return super().create(kit, session)
+
+    def get_by_id(self, kit_id: int, session: Session) -> Optional[Kit]:
+        """Busca kit por ID"""
+        return super().get_by_id(kit_id, session)
+
+    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[Kit]:
+        """Lista todos os kits"""
+        return super().get_all(session, skip, limit)
+
+    def update(self, kit: Kit, session: Session) -> Kit:
+        """Atualiza um kit"""
+        return super().update(kit, session)
+
+    def delete(self, kit_id: int, session: Session) -> bool:
+        """Deleta um kit"""
+        return super().delete(kit_id, session)
+
     def get_by_codigo(self, codigo: str, session: Session) -> Optional[Kit]:
         """Busca kit por código"""
         return session.query(Kit).filter(Kit.codigo == codigo).first()
