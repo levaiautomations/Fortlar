@@ -14,7 +14,7 @@ class Produto(Base, TimestampMixin, BaseMixin):
     """Modelo de domínio para Produto"""
     __tablename__ = 'produtos'
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id_produto: Mapped[int] = mapped_column(Integer, primary_key=True)
     codigo: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
     nome: Mapped[str] = mapped_column(String(150), nullable=False)
     descricao: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

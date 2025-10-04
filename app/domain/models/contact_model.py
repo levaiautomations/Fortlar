@@ -22,3 +22,10 @@ class Contact(Base, TimestampMixin, BaseMixin):
 
     # Relacionamento
     empresa: Mapped[Optional['Company']] = relationship('Company', back_populates='contatos')
+
+    def __init__(self, nome, email, telefone=None, celular=None, id_empresa=None):
+        self.nome = nome
+        self.email = email
+        self.telefone = telefone
+        self.celular = celular
+        self.id_empresa = id_empresa

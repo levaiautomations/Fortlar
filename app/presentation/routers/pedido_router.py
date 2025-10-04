@@ -61,6 +61,10 @@ async def list_pedidos(
         else:
             pedidos = pedido_repo.get_all(session, skip, limit)
         
+        # Debug: verificar se pedidos é None
+        if pedidos is None:
+            pedidos = []
+        
         return [
             {
                 "id": ped.id,

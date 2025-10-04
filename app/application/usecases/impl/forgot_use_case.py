@@ -42,7 +42,7 @@ class ForgotPasswordUseCase(UseCase[ForgotPasswordRequest, None]):
         # Token de verificação
         token = self.hash_service.generate_email_token(company_id)
 
-        email_token = EmailToken(id_email=None, id_empresa=company_id, token=token, tipo=EmailTokenTypeEnum.RESET_SENHA)
+        email_token = EmailToken(id_empresa=company_id, token=token, tipo=EmailTokenTypeEnum.RESET_SENHA)
 
         html = reset_password("https://meusite.com/ativar?token=123", token)
 

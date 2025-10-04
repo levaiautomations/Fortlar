@@ -18,15 +18,15 @@ class Kit(Base, TimestampMixin, BaseMixin):
     valor_total: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    # Relacionamentos
-    imagens: Mapped[List['ImagemKit']] = relationship(
-        'ImagemKit', 
-        back_populates='kit', 
-        cascade='all,delete-orphan'
-    )
-    produtos: Mapped[List['KitProduto']] = relationship(
-        'KitProduto', 
-        back_populates='kit', 
-        cascade='all,delete-orphan'
-    )
+    # Relacionamentos comentados temporariamente
+    # imagens: Mapped[List['ImagemKit']] = relationship(
+    #     'ImagemKit', 
+    #     back_populates='kit', 
+    #     cascade='all,delete-orphan'
+    # )
+    # produtos: Mapped[List['KitProduto']] = relationship(
+    #     'KitProduto', 
+    #     back_populates='kit', 
+    #     cascade='all,delete-orphan'
+    # )
 

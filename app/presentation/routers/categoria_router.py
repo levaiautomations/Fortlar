@@ -42,9 +42,13 @@ async def list_categorias(
         else:
             categorias = categoria_repo.get_all(session, skip, limit)
         
+        # Debug: verificar se categorias é None
+        if categorias is None:
+            categorias = []
+        
         return [
             {
-                "id": cat.id,
+                "id_categoria": cat.id_categoria,
                 "nome": cat.nome,
                 "created_at": cat.created_at.isoformat(),
                 "updated_at": cat.updated_at.isoformat()

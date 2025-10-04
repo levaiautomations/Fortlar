@@ -31,3 +31,8 @@ class EmailToken(Base, TimestampMixin, BaseMixin):
 
     # Relacionamentos
     empresa: Mapped[Optional['Company']] = relationship('Company', back_populates='email_token')
+
+    def __init__(self, id_empresa, token, tipo):
+        self.id_empresa = id_empresa
+        self.token = token
+        self.tipo = tipo

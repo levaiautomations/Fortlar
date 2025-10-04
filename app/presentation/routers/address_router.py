@@ -54,6 +54,10 @@ async def list_enderecos(
         else:
             enderecos = address_repo.get_all(session, skip, limit)
         
+        # Debug: verificar se enderecos é None
+        if enderecos is None:
+            enderecos = []
+        
         return [
             {
                 "id": end.id_endereco,

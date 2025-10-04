@@ -49,6 +49,10 @@ async def list_contatos(
         else:
             contatos = contact_repo.get_all(session, skip, limit)
         
+        # Debug: verificar se contatos é None
+        if contatos is None:
+            contatos = []
+        
         return [
             {
                 "id": cont.id_contato,

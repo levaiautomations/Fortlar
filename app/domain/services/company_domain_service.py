@@ -20,7 +20,6 @@ class CompanyDomainService:
     ) -> Company:
         """Cria uma nova instância de empresa com validações de domínio"""
         return Company(
-            id_empresa=None,
             cnpj=cnpj,
             razao_social=razao_social,
             nome_fantasia=nome_fantasia,

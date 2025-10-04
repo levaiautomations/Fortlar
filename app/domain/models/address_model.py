@@ -26,3 +26,13 @@ class Address(Base, TimestampMixin, BaseMixin):
 
     # Relacionamento
     empresa: Mapped[Optional['Company']] = relationship('Company', back_populates='enderecos')
+
+    def __init__(self, cep, numero, complemento=None, bairro=None, cidade=None, uf=None, ibge=None, id_empresa=None):
+        self.cep = cep
+        self.numero = numero
+        self.complemento = complemento
+        self.bairro = bairro
+        self.cidade = cidade
+        self.uf = uf
+        self.ibge = ibge
+        self.id_empresa = id_empresa

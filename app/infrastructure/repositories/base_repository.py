@@ -23,6 +23,16 @@ class BaseRepository(Generic[T]):
     
     def get_by_id(self, entity_id: int, session: Session) -> Optional[T]:
         """Busca entidade por ID"""
+        # Tenta diferentes nomes de chave primária
+        primary_key_attrs = ['id', 'id_empresa', 'id_categoria', 'id_subcategoria', 'id_produto', 'id_pedido', 'id_kit', 'id_endereco', 'id_contato', 'id_email']
+        
+        for attr_name in primary_key_attrs:
+            if hasattr(self.model_class, attr_name):
+                return session.query(self.model_class).filter(
+                    getattr(self.model_class, attr_name) == entity_id
+                ).first()
+        
+        # Fallback para 'id' se nenhum atributo específico for encontrado
         return session.query(self.model_class).filter(
             self.model_class.id == entity_id
         ).first()

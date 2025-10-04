@@ -51,8 +51,10 @@ class CategoriaRepository(ICategoriaRepository, BaseRepository[Categoria]):
 
     def get_categories_with_products(self, session: Session) -> List[Categoria]:
         """Busca categorias que possuem produtos"""
-        return session.query(Categoria).join(Categoria.produtos).distinct().all()
+        # Comentado temporariamente devido a relacionamentos desabilitados
+        return session.query(Categoria).all()
 
     def get_categories_with_subcategories(self, session: Session) -> List[Categoria]:
         """Busca categorias que possuem subcategorias"""
-        return session.query(Categoria).join(Categoria.subcategorias).distinct().all()
+        # Comentado temporariamente devido a relacionamentos desabilitados
+        return session.query(Categoria).all()

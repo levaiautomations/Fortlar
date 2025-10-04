@@ -42,10 +42,10 @@ class Pedido(Base, TimestampMixin, BaseMixin):
     valor_total: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 
     # Relacionamentos
-    cliente: Mapped[Optional['Company']] = relationship('Company', back_populates='pedidos')
+    cliente: Mapped[Optional['Company']] = relationship('Company')
     cupom: Mapped[Optional['Cupom']] = relationship('Cupom', back_populates='pedidos')
-    itens: Mapped[List['ItemPedido']] = relationship(
-        'ItemPedido', 
-        back_populates='pedido', 
-        cascade='all,delete-orphan'
-    )
+    # itens: Mapped[List['ItemPedido']] = relationship(
+    #     'ItemPedido', 
+    #     back_populates='pedido', 
+    #     cascade='all,delete-orphan'
+    # )
