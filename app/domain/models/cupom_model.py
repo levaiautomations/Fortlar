@@ -7,6 +7,9 @@ from enum import Enum as PyEnum
 
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
+# Imports para relacionamentos
+from app.domain.models.pedido_model import Pedido
+
 
 class TipoCupomEnum(PyEnum):
     """Enum para tipo de cupom"""

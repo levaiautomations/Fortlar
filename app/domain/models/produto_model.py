@@ -5,6 +5,10 @@ from decimal import Decimal
 
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
+# Imports para relacionamentos
+from app.domain.models.categoria_model import Categoria
+from app.domain.models.subcategoria_model import Subcategoria
+
 
 class Produto(Base, TimestampMixin, BaseMixin):
     """Modelo de domínio para Produto"""
@@ -22,10 +26,10 @@ class Produto(Base, TimestampMixin, BaseMixin):
     # Relacionamentos
     categoria: Mapped[Optional['Categoria']] = relationship('Categoria', back_populates='produtos')
     subcategoria: Mapped[Optional['Subcategoria']] = relationship('Subcategoria', back_populates='produtos')
-    imagens: Mapped[List['ImagemProduto']] = relationship(
-        'ImagemProduto', 
-        back_populates='produto', 
-        cascade='all,delete-orphan'
-    )
-    itens_pedido: Mapped[List['ItemPedido']] = relationship('ItemPedido', back_populates='produto')
-    kits_assoc: Mapped[List['KitProduto']] = relationship('KitProduto', back_populates='produto')
+    # imagens: Mapped[List['ImagemProduto']] = relationship(
+    #     'ImagemProduto', 
+    #     back_populates='produto', 
+    #     cascade='all,delete-orphan'
+    # )
+    # itens_pedido: Mapped[List['ItemPedido']] = relationship('ItemPedido', back_populates='produto')
+    # kits_assoc: Mapped[List['KitProduto']] = relationship('KitProduto', back_populates='produto')

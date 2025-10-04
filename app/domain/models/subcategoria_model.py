@@ -4,6 +4,10 @@ from typing import List
 
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
+# Imports para relacionamentos
+from app.domain.models.categoria_model import Categoria
+from app.domain.models.produto_model import Produto
+
 
 class Subcategoria(Base, TimestampMixin, BaseMixin):
     """Modelo de domínio para Subcategoria"""

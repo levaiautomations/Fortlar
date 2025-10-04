@@ -4,6 +4,9 @@ from typing import List
 
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
+# Imports para relacionamentos
+from app.domain.models.company_model import Company
+
 
 class Seller(Base, TimestampMixin, BaseMixin):
     """Modelo de domínio para Vendedor"""

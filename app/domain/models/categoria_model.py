@@ -4,12 +4,16 @@ from typing import List
 
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
+# Imports para relacionamentos
+from app.domain.models.subcategoria_model import Subcategoria
+from app.domain.models.produto_model import Produto
+
 
 class Categoria(Base, TimestampMixin, BaseMixin):
     """Modelo de domínio para Categoria"""
     __tablename__ = 'categoria'
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id_categoria: Mapped[int] = mapped_column(Integer, primary_key=True)
     nome: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
 
     # Relacionamentos
