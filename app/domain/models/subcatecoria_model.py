@@ -1,32 +1,25 @@
-from sqlalchemy import (
-Column, Integer, DateTime, ForeignKey, UniqueConstraint, String
-)
-from sqlalchemy.orm import relationship, declarative_base
-from sqlalchemy.sql import func
+from sqlalchemy import Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import List
 
-from app.infrastructure.configs.base_mixin import BaseMixin
-
-Base = declarative_base()
-
-
-class TimestampMixin:
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-
+from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
 
 class Subcategoria(Base, TimestampMixin, BaseMixin):
+    """Modelo de domínio para Subcategoria"""
     __tablename__ = 'subcategoria'
 
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id_categoria: Mapped[int] = mapped_column(
+        Integer, 
+        ForeignKey('categoria.id_categoria', ondelete='CASCADE'), 
+        nullable=False
+    )
+    nome: Mapped[str] = mapped_column(String(150), nullable=False)
 
-    id = Column(Integer, primary_key=True)
-    categoria_id = Column(Integer, ForeignKey('categoria.id', ondelete='CASCADE'), nullable=False)
-    nome = Column(String(150), nullable=False)
-
-
-    categoria = relationship('Categoria', back_populates='subcategorias')
-    produtos = relationship('Produto', back_populates='subcategoria')
-
+    # Relacionamentos
+    categoria: Mapped['Categoria'] = relationship('Categoria', back_populates='subcategorias')
+    produtos: Mapped[List['Produto']] = relationship('Produto', back_populates='subcategoria')
 
     __table_args__ = (
         UniqueConstraint('categoria_id', 'nome', name='uq_subcategoria_categoria_nome'),

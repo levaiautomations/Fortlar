@@ -1,34 +1,31 @@
-from sqlalchemy import (
-Column, Integer, String, Text, Boolean, DateTime, Numeric, ForeignKey
-)
-from sqlalchemy.orm import relationship, declarative_base
-from sqlalchemy.sql import func
+from sqlalchemy import Integer, String, Text, Boolean, Numeric, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional, List
+from decimal import Decimal
 
-
-Base = declarative_base()
-
-
-class TimestampMixin:
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
 
 class Produto(Base, TimestampMixin, BaseMixin):
+    """Modelo de domínio para Produto"""
     __tablename__ = 'produtos'
 
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    codigo: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
+    nome: Mapped[str] = mapped_column(String(150), nullable=False)
+    descricao: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    id_categoria: Mapped[int] = mapped_column(Integer, ForeignKey('categoria.id_categoria'), nullable=False)
+    id_subcategoria: Mapped[int] = mapped_column(Integer, ForeignKey('subcategoria.id_subcategoria'), nullable=False)
+    valor_base: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    id = Column(Integer, primary_key=True)
-    codigo = Column(String(50), nullable=False, unique=True, index=True)
-    nome = Column(String(150), nullable=False)
-    descricao = Column(Text)
-    categoria_id = Column(Integer, ForeignKey('categoria.id'), nullable=False)
-    subcategoria_id = Column(Integer, ForeignKey('subcategoria.id'), nullable=False)
-    valor_base = Column(Numeric(10, 2), nullable=False)
-    ativo = Column(Boolean, nullable=False, default=True)
-
-
-    categoria = relationship('Categoria', back_populates='produtos')
-    subcategoria = relationship('Subcategoria', back_populates='produtos')
-    imagens = relationship('ImagemProduto', back_populates='produto', cascade='all,delete-orphan')
-    itens_pedido = relationship('ItemPedido', back_populates='produto')
-    kits_assoc = relationship('KitProduto', back_populates='produto')
+    # Relacionamentos
+    categoria: Mapped[Optional['Categoria']] = relationship('Categoria', back_populates='produtos')
+    subcategoria: Mapped[Optional['Subcategoria']] = relationship('Subcategoria', back_populates='produtos')
+    imagens: Mapped[List['ImagemProduto']] = relationship(
+        'ImagemProduto', 
+        back_populates='produto', 
+        cascade='all,delete-orphan'
+    )
+    itens_pedido: Mapped[List['ItemPedido']] = relationship('ItemPedido', back_populates='produto')
+    kits_assoc: Mapped[List['KitProduto']] = relationship('KitProduto', back_populates='produto')

@@ -1,39 +1,30 @@
-from sqlalchemy import (
-Column, Integer, String, Text, Boolean, Date, DateTime, Numeric,
-ForeignKey, CheckConstraint, UniqueConstraint, Index, Enum as SAEnum
-)
-from sqlalchemy.orm import relationship, declarative_base
-from sqlalchemy.sql import func
+from sqlalchemy import Integer, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional
 
-from app.infrastructure.configs.base_mixin import BaseMixin
-
-Base = declarative_base()
-
-
-# Enum para status de pedido (mapeado para um ENUM nativo do Postgres quando possível)
-PEDIDO_STATUS = ('pendente', 'confirmado', 'em_preparacao', 'enviado', 'concluido', 'cancelado')
-
-
-
-
-class TimestampMixin:
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
 
 class KitProduto(Base, TimestampMixin, BaseMixin):
+    """Modelo de domínio para associação Kit-Produto"""
     __tablename__ = 'kits_produtos'
 
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id_kit: Mapped[int] = mapped_column(
+        Integer, 
+        ForeignKey('kits.id_kit', ondelete='CASCADE'), 
+        nullable=False
+    )
+    id_produto: Mapped[int] = mapped_column(
+        Integer, 
+        ForeignKey('produtos.id_produto', ondelete='CASCADE'), 
+        nullable=False
+    )
+    quantidade: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
-    id = Column(Integer, primary_key=True)
-    kit_id = Column(Integer, ForeignKey('kits.id', ondelete='CASCADE'), nullable=False)
-    produto_id = Column(Integer, ForeignKey('produtos.id', ondelete='CASCADE'), nullable=False)
-    quantidade = Column(Integer, nullable=False, default=1)
-
-
-    kit = relationship('Kit', back_populates='produtos')
-    produto = relationship('Produto', back_populates='kits_assoc')
-
+    # Relacionamentos
+    kit: Mapped[Optional['Kit']] = relationship('Kit', back_populates='produtos')
+    produto: Mapped[Optional['Produto']] = relationship('Produto', back_populates='kits_assoc')
 
     __table_args__ = (
         UniqueConstraint('kit_id', 'produto_id', name='uq_kit_produto'),
