@@ -4,9 +4,6 @@ from typing import List
 
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
-# Imports para relacionamentos
-from app.domain.models.categoria_model import Categoria
-from app.domain.models.produto_model import Produto
 
 
 class Subcategoria(Base, TimestampMixin, BaseMixin):
@@ -25,8 +22,6 @@ class Subcategoria(Base, TimestampMixin, BaseMixin):
     categoria: Mapped['Categoria'] = relationship('Categoria', back_populates='subcategorias')
     produtos: Mapped[List['Produto']] = relationship('Produto', back_populates='subcategoria')
 
-    __table_args__ = (
-        UniqueConstraint('categoria_id', 'nome', name='uq_subcategoria_categoria_nome'),
-    )
+
 
 

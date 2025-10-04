@@ -30,8 +30,7 @@ class Company(Base, TimestampMixin, BaseMixin):
     ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     id_vendedor: Mapped[int] = mapped_column(Integer, ForeignKey('vendedor.id_vendedor'), nullable=False)
 
-    # Relacionamentos
-    vendedor: Mapped[Optional['Seller']] = relationship('Seller', back_populates='empresa')
+
     enderecos: Mapped[List['Address']] = relationship(
         'Address', 
         back_populates='empresa', 
@@ -43,4 +42,3 @@ class Company(Base, TimestampMixin, BaseMixin):
         cascade='all,delete-orphan'
     )
     email_token: Mapped[Optional['EmailToken']] = relationship('EmailToken', back_populates='empresa')
-    pedidos: Mapped[List['Pedido']] = relationship('Pedido', back_populates='cliente')

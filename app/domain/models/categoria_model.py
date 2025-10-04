@@ -6,7 +6,7 @@ from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixi
 
 # Imports para relacionamentos
 from app.domain.models.subcategoria_model import Subcategoria
-from app.domain.models.produto_model import Produto
+
 
 
 class Categoria(Base, TimestampMixin, BaseMixin):

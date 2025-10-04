@@ -9,7 +9,6 @@ from enum import Enum as PyEnum
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
 # Imports para relacionamentos
-from app.domain.models.company_model import Company
 from app.domain.models.cupom_model import Cupom
 
 

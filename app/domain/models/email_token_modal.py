@@ -7,9 +7,6 @@ from datetime import datetime
 from app.domain.models.enumerations.email_token_type_enumerations import EmailTokenTypeEnum
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
-# Imports para relacionamentos
-from app.domain.models.company_model import Company
-
 
 class EmailToken(Base, TimestampMixin, BaseMixin):
     """Modelo de domínio para EmailToken"""
