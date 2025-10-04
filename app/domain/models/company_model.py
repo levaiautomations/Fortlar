@@ -9,8 +9,6 @@ from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixi
 from app.domain.models.address_model import Address
 from app.domain.models.contact_model import Contact
 from app.domain.models.email_token_modal import EmailToken
-from app.domain.models.seller_model import Seller
-from app.domain.models.pedido_model import Pedido
 
 
 class Company(Base, TimestampMixin, BaseMixin):
