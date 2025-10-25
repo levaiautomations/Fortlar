@@ -4,9 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from fastapi.responses import JSONResponse
 from typing import List, Optional
 
+# Repositories
+from app.infrastructure.repositories.impl.categoria_repository_impl import CategoriaRepositoryImpl
+
+# Configs
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.configs.session_config import get_session
-from app.infrastructure.container.dependency_container import container
 
 categoria_router = APIRouter(
     prefix="/categorias",
@@ -17,6 +20,9 @@ categoria_router = APIRouter(
         500: {"description": "Erro interno do servidor"}
     }
 )
+
+
+# Dependency Injection Functions removidas - usando padrão simples
 
 
 @categoria_router.get(
@@ -33,7 +39,7 @@ async def list_categorias(
 ) -> List[dict]:
     """Lista categorias com filtros opcionais"""
     try:
-        categoria_repo = container.categoria_repository
+        categoria_repo: CategoriaRepositoryImpl = CategoriaRepositoryImpl()
         
         if search_name:
             categorias = categoria_repo.search_by_name(search_name, session)
@@ -70,7 +76,7 @@ async def get_categoria(
 ) -> dict:
     """Busca categoria por ID"""
     try:
-        categoria_repo = container.categoria_repository
+        categoria_repo: CategoriaRepositoryImpl = CategoriaRepositoryImpl()
         categoria = categoria_repo.get_by_id(categoria_id, session)
         
         if not categoria:
@@ -100,7 +106,8 @@ async def list_produtos_by_categoria(
 ) -> List[dict]:
     """Lista produtos de uma categoria"""
     try:
-        produto_repo = container.produto_repository
+        from app.infrastructure.repositories.impl.produto_repository_impl import ProdutoRepositoryImpl
+        produto_repo: ProdutoRepositoryImpl = ProdutoRepositoryImpl()
         
         if active_only:
             produtos = produto_repo.get_active_products(session)
@@ -136,7 +143,7 @@ async def list_subcategorias_by_categoria(
 ) -> List[dict]:
     """Lista subcategorias de uma categoria"""
     try:
-        categoria_repo = container.categoria_repository
+        categoria_repo: CategoriaRepositoryImpl = CategoriaRepositoryImpl()
         categoria = categoria_repo.get_by_id(categoria_id, session)
         
         if not categoria:

@@ -9,6 +9,7 @@ from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixi
 from app.domain.models.address_model import Address
 from app.domain.models.contact_model import Contact
 from app.domain.models.email_token_modal import EmailToken
+from app.domain.models.seller_model import Seller
 
 
 class Company(Base, TimestampMixin, BaseMixin):
@@ -40,6 +41,8 @@ class Company(Base, TimestampMixin, BaseMixin):
         cascade='all,delete-orphan'
     )
     email_token: Mapped[Optional['EmailToken']] = relationship('EmailToken', back_populates='empresa')
+
+    vendedor: Mapped["Seller"] = relationship("Seller", back_populates="empresa")
 
     def __init__(self, cnpj, razao_social, nome_fantasia, senha_hash, id_vendedor, perfil=RoleEnum.CLIENTE, ativo=True):
         self.cnpj = cnpj

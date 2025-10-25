@@ -12,7 +12,7 @@ from app.domain.models.enumerations.role_enumerations import RoleEnum
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.configs.session_config import get_session
 
-jwt_service = JWTService(secret_key="minha_chave_secreta")
+jwt_service = JWTService(secret_key="sua_chave_secreta_aqui")
 security = HTTPBearer()
 
 def verify_user_permission(role: Optional[RoleEnum] = None):

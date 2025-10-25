@@ -10,7 +10,7 @@ from app.infrastructure.repositories.pedido_repository_interface import IPedidoR
 from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class PedidoRepository(IPedidoRepository, BaseRepository[Pedido]):
+class PedidoRepositoryImpl(IPedidoRepository, BaseRepository[Pedido]):
     """Repository para operações de Pedido com CRUD completo"""
 
     def __init__(self):

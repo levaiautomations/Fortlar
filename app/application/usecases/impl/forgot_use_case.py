@@ -8,8 +8,8 @@ from app.application.usecases.use_case import UseCase
 from app.domain.models.enumerations.email_token_type_enumerations import EmailTokenTypeEnum
 from app.infrastructure.repositories.company_repository_interface import ICompanyRepository
 from app.infrastructure.repositories.email_token_repository_interface import IEmailTokenRepository
-from app.infrastructure.repositories.impl.company_repository_impl import CompanyRepository
-from app.infrastructure.repositories.impl.email_token_repository_impl import EmailTokenRepository
+from app.infrastructure.repositories.impl.company_repository_impl import CompanyRepositoryImpl
+from app.infrastructure.repositories.impl.email_token_repository_impl import EmailTokenRepositoryImpl
 from app.presentation.routers.request.forgot_password_request import ForgotPasswordRequest
 from app.domain.models.email_token_modal import EmailToken
 from app.infrastructure.configs.database_config import Session
@@ -17,10 +17,10 @@ from app.infrastructure.configs.database_config import Session
 class ForgotPasswordUseCase(UseCase[ForgotPasswordRequest, None]):
 
     def __init__(self):
-        self.company_repo: ICompanyRepository = CompanyRepository()
-        self.email_token_repo: IEmailTokenRepository = EmailTokenRepository()
-        self.hash_service = HashService()
-        self.email_service = EmailService()
+        self.company_repo: ICompanyRepository = CompanyRepositoryImpl()
+        self.email_token_repo: IEmailTokenRepository = EmailTokenRepositoryImpl()
+        self.hash_service: HashService = HashService()
+        self.email_service: EmailService = EmailService()
 
     def execute(self, data: ForgotPasswordRequest, session: Session = None) -> None:
         company = self.company_repo.find_by_email_or_cnpj(data.email.__str__(), session)
@@ -28,9 +28,15 @@ class ForgotPasswordUseCase(UseCase[ForgotPasswordRequest, None]):
         if not company:
             return
 
+        # Gera token de reset
+        token = self.hash_service.generate_email_token(company.id_empresa)
 
         # salva no banco
-        email_token = EmailToken(token=token, id_empresa=company.id_empresa)
+        email_token = EmailToken(
+            id_empresa=company.id_empresa,
+            token=token,
+            tipo=EmailTokenTypeEnum.RESET_SENHA
+        )
         self.email_token_repo.create_email_token(email_token, session)
         session.commit()
 

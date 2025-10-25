@@ -8,7 +8,7 @@ from app.infrastructure.repositories.categoria_repository_interface import ICate
 from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class CategoriaRepository(ICategoriaRepository, BaseRepository[Categoria]):
+class CategoriaRepositoryImpl(ICategoriaRepository, BaseRepository[Categoria]):
     """Repository para operações de Categoria com CRUD completo"""
 
     def __init__(self):

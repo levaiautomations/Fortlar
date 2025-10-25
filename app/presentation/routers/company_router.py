@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from fastapi.responses import JSONResponse
 from typing import List, Optional
+from loguru import logger
 
 from app.application.usecases.impl.create_company_use_case import CreateCompanyUseCase
 from app.application.usecases.impl.list_companies_use_case import ListCompaniesUseCase
@@ -8,9 +9,10 @@ from app.application.usecases.impl.get_company_use_case import GetCompanyUseCase
 from app.application.usecases.impl.update_company_use_case import UpdateCompanyUseCase
 from app.application.usecases.impl.delete_company_use_case import DeleteCompanyUseCase
 from app.domain.exceptions.company_exceptions import CompanyAlreadyExistsException, CompanyNotFoundException
+from app.domain.models.enumerations.role_enumerations import RoleEnum
 from app.infrastructure.configs.database_config import Session
+from app.infrastructure.configs.security_config import verify_user_permission
 from app.infrastructure.configs.session_config import get_session
-from app.infrastructure.container.dependency_container import container
 from app.presentation.routers.request.company_request import CompanyRequest
 from app.presentation.routers.response.company_response import CompanyResponse
 
@@ -25,21 +27,6 @@ company_router = APIRouter(
 )
 
 
-# Dependencies
-def get_create_company_use_case() -> CreateCompanyUseCase:
-    return container.create_company_use_case
-
-def get_list_companies_use_case() -> ListCompaniesUseCase:
-    return container.list_companies_use_case
-
-def get_get_company_use_case() -> GetCompanyUseCase:
-    return container.get_company_use_case
-
-def get_update_company_use_case() -> UpdateCompanyUseCase:
-    return container.update_company_use_case
-
-def get_delete_company_use_case() -> DeleteCompanyUseCase:
-    return container.delete_company_use_case
 
 
 @company_router.post(
@@ -51,11 +38,12 @@ def get_delete_company_use_case() -> DeleteCompanyUseCase:
 )
 async def create_company(
     request: CompanyRequest,
-    session: Session = Depends(get_session),
-    use_case: CreateCompanyUseCase = Depends(get_create_company_use_case)
+    session: Session = Depends(get_session)
 ) -> CompanyResponse:
     """Cria uma nova empresa"""
     try:
+        logger.info('=== Criando empresa ===')
+        use_case: CreateCompanyUseCase = CreateCompanyUseCase()
         return use_case.execute(request, session=session)
     except CompanyAlreadyExistsException as e:
         raise HTTPException(status_code=422, detail=e.message)
@@ -73,10 +61,10 @@ async def list_companies(
     active_only: bool = Query(False, description="Filtrar apenas empresas ativas"),
     vendedor_id: Optional[int] = Query(None, description="Filtrar por vendedor"),
     search_name: Optional[str] = Query(None, description="Buscar por nome"),
-    session: Session = Depends(get_session),
-    use_case: ListCompaniesUseCase = Depends(get_list_companies_use_case)
+    session: Session = Depends(get_session)
 ) -> List[CompanyResponse]:
     """Lista empresas com filtros opcionais"""
+    logger.info('=== Listando empresas ===')
     request = {
         "skip": skip,
         "limit": limit,
@@ -84,6 +72,7 @@ async def list_companies(
         "vendedor_id": vendedor_id,
         "search_name": search_name
     }
+    use_case: ListCompaniesUseCase = ListCompaniesUseCase()
     return use_case.execute(request, session=session)
 
 
@@ -96,10 +85,12 @@ async def list_companies(
 async def get_company(
     company_id: int = Path(..., description="ID da empresa"),
     session: Session = Depends(get_session),
-    use_case: GetCompanyUseCase = Depends(get_get_company_use_case)
+    current_user=Depends(verify_user_permission(role=RoleEnum.CLIENTE))
 ) -> CompanyResponse:
     """Busca empresa por ID"""
     try:
+        logger.info('=== Buscando empresa por ID: {} ===', company_id)
+        use_case: GetCompanyUseCase = GetCompanyUseCase()
         return use_case.execute(company_id, session=session)
     except CompanyNotFoundException as e:
         raise HTTPException(status_code=404, detail=e.message)
@@ -116,10 +107,10 @@ async def update_company(
     razao_social: Optional[str] = Query(None, description="Razão social"),
     nome_fantasia: Optional[str] = Query(None, description="Nome fantasia"),
     ativo: Optional[bool] = Query(None, description="Status ativo/inativo"),
-    session: Session = Depends(get_session),
-    use_case: UpdateCompanyUseCase = Depends(get_update_company_use_case)
+    session: Session = Depends(get_session)
 ) -> CompanyResponse:
     """Atualiza empresa"""
+    logger.info('=== Atualizando empresa: {} ===', company_id)
     request = {
         "company_id": company_id,
         "razao_social": razao_social,
@@ -127,6 +118,7 @@ async def update_company(
         "ativo": ativo
     }
     try:
+        use_case: UpdateCompanyUseCase = UpdateCompanyUseCase()
         return use_case.execute(request, session=session)
     except CompanyNotFoundException as e:
         raise HTTPException(status_code=404, detail=e.message)
@@ -140,11 +132,12 @@ async def update_company(
 )
 async def delete_company(
     company_id: int = Path(..., description="ID da empresa"),
-    session: Session = Depends(get_session),
-    use_case: DeleteCompanyUseCase = Depends(get_delete_company_use_case)
+    session: Session = Depends(get_session)
 ):
     """Deleta empresa"""
     try:
+        logger.info('=== Deletando empresa: {} ===', company_id)
+        use_case: DeleteCompanyUseCase = DeleteCompanyUseCase()
         use_case.execute(company_id, session=session)
         return JSONResponse(content=None, status_code=204)
     except CompanyNotFoundException as e:

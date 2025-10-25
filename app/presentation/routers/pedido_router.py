@@ -1,13 +1,32 @@
-"""Router para operações de Pedidos"""
+"""Router para operações de Pedidos - Refatorado com Clean Architecture e SOLID"""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from fastapi.responses import JSONResponse
-from typing import List, Optional
-from datetime import datetime
+from typing import List
 
+# Use Cases
+from app.application.usecases.impl.list_pedidos_use_case import ListPedidosUseCase
+from app.application.usecases.impl.get_pedido_use_case import GetPedidoUseCase
+from app.application.usecases.impl.list_pedidos_recentes_use_case import ListPedidosRecentesUseCase
+
+# Repositories
+from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepository
+
+# Configs
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.configs.session_config import get_session
-from app.infrastructure.container.dependency_container import container
+from app.infrastructure.configs.security_config import verify_user_permission
+from app.presentation.routers.request.pedido_request import (
+    ListPedidosRequest,
+    GetPedidoRequest,
+    ListPedidosByClienteRequest,
+    ListPedidosByStatusRequest,
+    ListPedidosRecentesRequest
+)
+from app.presentation.routers.response.pedido_response import (
+    PedidoResponse,
+    ListPedidosResponse
+)
 
 pedido_router = APIRouter(
     prefix="/pedidos",
@@ -20,64 +39,34 @@ pedido_router = APIRouter(
 )
 
 
+# Dependency Injection Functions removidas - usando padrão simples
+
+
 @pedido_router.get(
     "/",
     summary="Listar pedidos",
-    description="Lista todos os pedidos com filtros opcionais"
+    description="Lista todos os pedidos com filtros opcionais",
+    response_model=List[PedidoResponse]
 )
 async def list_pedidos(
-    skip: int = Query(0, ge=0, description="Número de registros para pular"),
-    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros"),
-    cliente_id: Optional[int] = Query(None, description="Filtrar por cliente"),
-    status: Optional[str] = Query(None, description="Filtrar por status"),
-    cupom_id: Optional[int] = Query(None, description="Filtrar por cupom"),
-    start_date: Optional[datetime] = Query(None, description="Data inicial"),
-    end_date: Optional[datetime] = Query(None, description="Data final"),
-    min_value: Optional[float] = Query(None, ge=0, description="Valor mínimo"),
-    max_value: Optional[float] = Query(None, ge=0, description="Valor máximo"),
-    session: Session = Depends(get_session)
-) -> List[dict]:
-    """Lista pedidos com filtros opcionais"""
+    request: ListPedidosRequest = Depends(),
+    session: Session = Depends(get_session),
+    current_user = Depends(verify_user_permission())
+) -> List[PedidoResponse]:
+    """
+    Lista pedidos com filtros opcionais.
+    
+    Aplica os princípios SOLID:
+    - Single Responsibility: Endpoint apenas orquestra a chamada do use case
+    - Open/Closed: Extensível via novos filtros sem modificar código existente
+    - Dependency Inversion: Depende de abstrações (use case) não de implementações
+    """
     try:
-        pedido_repo = container.pedido_repository
-        
-        if cliente_id:
-            pedidos = pedido_repo.get_by_cliente(cliente_id, session)
-        elif status:
-            from app.domain.models.pedido_model import PedidoStatusEnum
-            status_enum = PedidoStatusEnum(status)
-            pedidos = pedido_repo.get_by_status(status_enum, session)
-        elif cupom_id:
-            pedidos = pedido_repo.get_by_cupom(cupom_id, session)
-        elif start_date and end_date:
-            pedidos = pedido_repo.get_by_date_range(start_date, end_date, session)
-        elif min_value is not None and max_value is not None:
-            from decimal import Decimal
-            pedidos = pedido_repo.get_orders_by_value_range(
-                Decimal(str(min_value)), 
-                Decimal(str(max_value)), 
-                session
-            )
-        else:
-            pedidos = pedido_repo.get_all(session, skip, limit)
-        
-        # Debug: verificar se pedidos é None
-        if pedidos is None:
-            pedidos = []
-        
-        return [
-            {
-                "id": ped.id,
-                "id_cliente": ped.id_cliente,
-                "id_cupom": ped.cupom_id,
-                "data_pedido": ped.data_pedido.isoformat(),
-                "status": ped.status.value,
-                "valor_total": float(ped.valor_total),
-                "created_at": ped.created_at.isoformat(),
-                "updated_at": ped.updated_at.isoformat()
-            }
-            for ped in pedidos
-        ]
+        use_case: ListPedidosUseCase = ListPedidosUseCase()
+        pedidos_data = use_case.execute(request.dict(), session)
+        return [PedidoResponse(**pedido) for pedido in pedidos_data]
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar pedidos: {str(e)}")
 
@@ -85,49 +74,27 @@ async def list_pedidos(
 @pedido_router.get(
     "/{pedido_id}",
     summary="Buscar pedido por ID",
-    description="Busca um pedido específico pelo ID"
+    description="Busca um pedido específico pelo ID",
+    response_model=PedidoResponse
 )
 async def get_pedido(
     pedido_id: int = Path(..., description="ID do pedido"),
     include_items: bool = Query(False, description="Incluir itens do pedido"),
-    session: Session = Depends(get_session)
-) -> dict:
-    """Busca pedido por ID"""
+    session: Session = Depends(get_session),
+    current_user = Depends(verify_user_permission())
+) -> PedidoResponse:
+    """
+    Busca pedido por ID.
+    
+    Aplica os princípios SOLID:
+    - Single Responsibility: Endpoint apenas orquestra a chamada do use case
+    - Dependency Inversion: Depende de abstrações (use case) não de implementações
+    """
     try:
-        pedido_repo = container.pedido_repository
-        
-        if include_items:
-            pedido = pedido_repo.get_orders_with_items(pedido_id, session)
-        else:
-            pedido = pedido_repo.get_by_id(pedido_id, session)
-        
-        if not pedido:
-            raise HTTPException(status_code=404, detail="Pedido não encontrado")
-        
-        result = {
-            "id": pedido.id,
-            "id_cliente": pedido.id_cliente,
-            "id_cupom": pedido.cupom_id,
-            "data_pedido": pedido.data_pedido.isoformat(),
-            "status": pedido.status.value,
-            "valor_total": float(pedido.valor_total),
-            "created_at": pedido.created_at.isoformat(),
-            "updated_at": pedido.updated_at.isoformat()
-        }
-        
-        if include_items and hasattr(pedido, 'itens'):
-            result["itens"] = [
-                {
-                    "id": item.id,
-                    "id_produto": item.id_produto,
-                    "quantidade": item.quantidade,
-                    "preco_unitario": float(item.preco_unitario),
-                    "subtotal": float(item.subtotal)
-                }
-                for item in pedido.itens
-            ]
-        
-        return result
+        use_case: GetPedidoUseCase = GetPedidoUseCase()
+        request = GetPedidoRequest(pedido_id=pedido_id, include_items=include_items)
+        pedido_data = use_case.execute(request.dict(), session)
+        return PedidoResponse(**pedido_data)
     except HTTPException:
         raise
     except Exception as e:
@@ -137,30 +104,27 @@ async def get_pedido(
 @pedido_router.get(
     "/cliente/{cliente_id}",
     summary="Listar pedidos do cliente",
-    description="Lista todos os pedidos de um cliente específico"
+    description="Lista todos os pedidos de um cliente específico",
+    response_model=List[PedidoResponse]
 )
 async def list_pedidos_by_cliente(
     cliente_id: int = Path(..., description="ID do cliente"),
     session: Session = Depends(get_session)
-) -> List[dict]:
-    """Lista pedidos de um cliente"""
+) -> List[PedidoResponse]:
+    """
+    Lista pedidos de um cliente específico.
+    
+    Aplica os princípios SOLID:
+    - Single Responsibility: Endpoint apenas orquestra a chamada do use case
+    - Dependency Inversion: Depende de abstrações (use case) não de implementações
+    """
     try:
-        pedido_repo = container.pedido_repository
-        pedidos = pedido_repo.get_by_cliente(cliente_id, session)
-        
-        return [
-            {
-                "id": ped.id,
-                "id_cliente": ped.id_cliente,
-                "id_cupom": ped.cupom_id,
-                "data_pedido": ped.data_pedido.isoformat(),
-                "status": ped.status.value,
-                "valor_total": float(ped.valor_total),
-                "created_at": ped.created_at.isoformat(),
-                "updated_at": ped.updated_at.isoformat()
-            }
-            for ped in pedidos
-        ]
+        use_case: ListPedidosUseCase = ListPedidosUseCase()
+        request = ListPedidosByClienteRequest(cliente_id=cliente_id)
+        pedidos_data = use_case.execute(request.dict(), session)
+        return [PedidoResponse(**pedido) for pedido in pedidos_data]
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar pedidos do cliente: {str(e)}")
 
@@ -168,37 +132,25 @@ async def list_pedidos_by_cliente(
 @pedido_router.get(
     "/status/{status}",
     summary="Listar pedidos por status",
-    description="Lista pedidos com um status específico"
+    description="Lista pedidos com um status específico",
+    response_model=List[PedidoResponse]
 )
 async def list_pedidos_by_status(
     status: str = Path(..., description="Status do pedido"),
     session: Session = Depends(get_session)
-) -> List[dict]:
-    """Lista pedidos por status"""
+) -> List[PedidoResponse]:
+    """
+    Lista pedidos por status.
+    
+    Aplica os princípios SOLID:
+    - Single Responsibility: Endpoint apenas orquestra a chamada do use case
+    - Dependency Inversion: Depende de abstrações (use case) não de implementações
+    """
     try:
-        from app.domain.models.pedido_model import PedidoStatusEnum
-        pedido_repo = container.pedido_repository
-        
-        try:
-            status_enum = PedidoStatusEnum(status)
-        except ValueError:
-            raise HTTPException(status_code=422, detail="Status inválido")
-        
-        pedidos = pedido_repo.get_by_status(status_enum, session)
-        
-        return [
-            {
-                "id": ped.id,
-                "id_cliente": ped.id_cliente,
-                "id_cupom": ped.cupom_id,
-                "data_pedido": ped.data_pedido.isoformat(),
-                "status": ped.status.value,
-                "valor_total": float(ped.valor_total),
-                "created_at": ped.created_at.isoformat(),
-                "updated_at": ped.updated_at.isoformat()
-            }
-            for ped in pedidos
-        ]
+        use_case: ListPedidosUseCase = ListPedidosUseCase()
+        request = ListPedidosByStatusRequest(status=status)
+        pedidos_data = use_case.execute(request.dict(), session)
+        return [PedidoResponse(**pedido) for pedido in pedidos_data]
     except HTTPException:
         raise
     except Exception as e:
@@ -208,29 +160,26 @@ async def list_pedidos_by_status(
 @pedido_router.get(
     "/recentes",
     summary="Listar pedidos recentes",
-    description="Lista pedidos dos últimos X dias"
+    description="Lista pedidos dos últimos X dias",
+    response_model=List[PedidoResponse]
 )
 async def list_pedidos_recentes(
     days: int = Query(7, ge=1, le=365, description="Número de dias"),
     session: Session = Depends(get_session)
-) -> List[dict]:
-    """Lista pedidos recentes"""
+) -> List[PedidoResponse]:
+    """
+    Lista pedidos recentes.
+    
+    Aplica os princípios SOLID:
+    - Single Responsibility: Endpoint apenas orquestra a chamada do use case
+    - Dependency Inversion: Depende de abstrações (use case) não de implementações
+    """
     try:
-        pedido_repo = container.pedido_repository
-        pedidos = pedido_repo.get_recent_orders(days, session)
-        
-        return [
-            {
-                "id": ped.id,
-                "id_cliente": ped.id_cliente,
-                "id_cupom": ped.cupom_id,
-                "data_pedido": ped.data_pedido.isoformat(),
-                "status": ped.status.value,
-                "valor_total": float(ped.valor_total),
-                "created_at": ped.created_at.isoformat(),
-                "updated_at": ped.updated_at.isoformat()
-            }
-            for ped in pedidos
-        ]
+        use_case: ListPedidosRecentesUseCase = ListPedidosRecentesUseCase()
+        request = ListPedidosRecentesRequest(days=days)
+        pedidos_data = use_case.execute(request.dict(), session)
+        return [PedidoResponse(**pedido) for pedido in pedidos_data]
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar pedidos recentes: {str(e)}")

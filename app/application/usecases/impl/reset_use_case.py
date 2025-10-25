@@ -5,8 +5,8 @@ from app.application.usecases.use_case import UseCase
 from app.domain.models.enumerations.email_token_type_enumerations import EmailTokenTypeEnum
 from app.infrastructure.repositories.company_repository_interface import ICompanyRepository
 from app.infrastructure.repositories.email_token_repository_interface import IEmailTokenRepository
-from app.infrastructure.repositories.impl.company_repository_impl import CompanyRepository
-from app.infrastructure.repositories.impl.email_token_repository_impl import EmailTokenRepository
+from app.infrastructure.repositories.impl.company_repository_impl import CompanyRepositoryImpl
+from app.infrastructure.repositories.impl.email_token_repository_impl import EmailTokenRepositoryImpl
 from app.infrastructure.utils.validate_password import validate_password
 from app.presentation.routers.request.reset_password_request import ResetPasswordRequest
 from app.infrastructure.configs.database_config import Session
@@ -14,9 +14,9 @@ from app.infrastructure.configs.database_config import Session
 class ResetPasswordUseCase(UseCase[ResetPasswordRequest, None]):
 
     def __init__(self):
-        self.company_repo: ICompanyRepository = CompanyRepository()
-        self.email_token_repo: IEmailTokenRepository = EmailTokenRepository()
-        self.hash_service = HashService()
+        self.company_repo: ICompanyRepository = CompanyRepositoryImpl()
+        self.email_token_repo: IEmailTokenRepository = EmailTokenRepositoryImpl()
+        self.hash_service: HashService = HashService()
 
 
     def execute(self, data: ResetPasswordRequest, session: Session = None) -> None:

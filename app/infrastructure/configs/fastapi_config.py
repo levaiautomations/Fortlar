@@ -2,6 +2,8 @@ import time
 import os
 from dotenv import load_dotenv
 
+from app.presentation.routers.utils_router import utils_router
+
 # Carrega as variáveis de ambiente antes de qualquer importação de routers
 load_dotenv()
 
@@ -18,6 +20,7 @@ from app.application.exceptions.unprocessable_entity_exception import Unprocessa
 
 # Routers
 from app.presentation.routers.login_router import login_router
+from app.presentation.routers.password_router import password_router
 from app.presentation.routers.company_router import company_router
 from app.presentation.routers.produto_router import produto_router
 from app.presentation.routers.categoria_router import categoria_router
@@ -78,17 +81,17 @@ application.add_middleware(
 os.environ['TZ'] = os.getenv("TZ", "America/Sao_Paulo")
 time.tzset()
 
-# Incluir routers
-application.include_router(login_router, prefix="/login", tags=["Autenticação"])
-application.include_router(login_router, prefix="/password", tags=["Autenticação"])
-application.include_router(login_router, prefix="/token", tags=["Autenticação"])
-application.include_router(company_router, tags=["Empresas"])
-application.include_router(produto_router, tags=["Produtos"])
-application.include_router(categoria_router, tags=["Categorias"])
-application.include_router(pedido_router, tags=["Pedidos"])
-application.include_router(kit_router, tags=["Kits"])
-application.include_router(contact_router, tags=["Contatos"])
-application.include_router(address_router, tags=["Endereços"])
+# Incluir routers com prefixo /api
+application.include_router(login_router, prefix="/api", tags=["Autenticação"])
+application.include_router(password_router, prefix="/api", tags=["Autenticação"])
+application.include_router(company_router, prefix="/api", tags=["Empresas"])
+application.include_router(produto_router, prefix="/api", tags=["Produtos"])
+application.include_router(categoria_router, prefix="/api", tags=["Categorias"])
+application.include_router(pedido_router, prefix="/api", tags=["Pedidos"])
+application.include_router(kit_router, prefix="/api", tags=["Kits"])
+application.include_router(contact_router, prefix="/api", tags=["Contatos"])
+application.include_router(address_router, prefix="/api", tags=["Endereços"])
+application.include_router(utils_router, prefix="/api", tags=["Utilitários"])
 
 # ==== Exception handlers ====
 @application.exception_handler(ExistingRecordException)

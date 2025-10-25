@@ -8,7 +8,7 @@ from app.domain.models.enumerations.email_token_type_enumerations import EmailTo
 from app.infrastructure.configs.base_mixin import BaseMixin, Base, TimestampMixin
 
 
-class EmailToken(Base, TimestampMixin, BaseMixin):
+class EmailToken(Base, BaseMixin):
     """Modelo de domínio para EmailToken"""
     __tablename__ = 'email_token'
 

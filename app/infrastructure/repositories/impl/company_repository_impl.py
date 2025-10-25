@@ -10,7 +10,7 @@ from app.infrastructure.repositories.company_repository_interface import ICompan
 from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class CompanyRepository(ICompanyRepository, BaseRepository[Company]):
+class CompanyRepositoryImpl(ICompanyRepository, BaseRepository[Company]):
     """Repository para operações de Company com CRUD completo"""
 
     def __init__(self):

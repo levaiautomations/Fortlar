@@ -9,7 +9,7 @@ from app.infrastructure.repositories.produto_repository_interface import IProdut
 from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class ProdutoRepository(IProdutoRepository, BaseRepository[Produto]):
+class ProdutoRepositoryImpl(IProdutoRepository, BaseRepository[Produto]):
     """Repository para operações de Produto com CRUD completo"""
 
     def __init__(self):

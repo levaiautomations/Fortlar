@@ -6,7 +6,8 @@ from typing import List, Optional
 
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.configs.session_config import get_session
-from app.infrastructure.container.dependency_container import container
+# Repositories
+from app.infrastructure.repositories.impl.kit_repository_impl import KitRepository
 
 kit_router = APIRouter(
     prefix="/kits",
@@ -38,7 +39,7 @@ async def list_kits(
 ) -> List[dict]:
     """Lista kits com filtros opcionais"""
     try:
-        kit_repo = container.kit_repository
+        kit_repo = KitRepository()
         
         if search_name:
             kits = kit_repo.search_by_name(search_name, session)
@@ -91,7 +92,7 @@ async def get_kit(
 ) -> dict:
     """Busca kit por ID"""
     try:
-        kit_repo = container.kit_repository
+        kit_repo = KitRepository()
         kit = kit_repo.get_by_id(kit_id, session)
         
         if not kit:
@@ -147,7 +148,7 @@ async def get_kit_by_codigo(
 ) -> dict:
     """Busca kit por código"""
     try:
-        kit_repo = container.kit_repository
+        kit_repo = KitRepository()
         kit = kit_repo.get_by_codigo(codigo, session)
         
         if not kit:
@@ -182,7 +183,7 @@ async def list_kits_by_categoria(
 ) -> List[dict]:
     """Lista kits por categoria"""
     try:
-        kit_repo = container.kit_repository
+        kit_repo = KitRepository()
         kits = kit_repo.get_by_categoria(categoria, session)
         
         if active_only:
@@ -218,7 +219,7 @@ async def search_kits(
 ) -> List[dict]:
     """Busca kits por termo"""
     try:
-        kit_repo = container.kit_repository
+        kit_repo = KitRepository()
         kits = kit_repo.search_by_name(q, session)
         
         if active_only:

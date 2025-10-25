@@ -8,7 +8,7 @@ from app.infrastructure.repositories.address_repository_interface import IAddres
 from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class AddressRepository(IAddressRepository, BaseRepository[Address]):
+class AddressRepositoryImpl(IAddressRepository, BaseRepository[Address]):
     """Repository para operações de Address com CRUD completo"""
 
     def __init__(self):

@@ -8,7 +8,7 @@ from app.infrastructure.repositories.contact_repository_interface import IContac
 from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class ContactRepository(IContactRepository, BaseRepository[Contact]):
+class ContactRepositoryImpl(IContactRepository, BaseRepository[Contact]):
     """Repository para operações de Contact com CRUD completo"""
 
     def __init__(self):

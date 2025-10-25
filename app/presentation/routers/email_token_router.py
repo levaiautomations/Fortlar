@@ -18,3 +18,27 @@ async def validate_token_router(
 
     response = use_case.execute(request, session=session)
     return JSONResponse(content= response, status_code=200)
+
+
+@company_router.put("/")
+async def validate_token_router(
+    request: ValidateTokenRequest,
+    session: Session = Depends(get_session)
+):
+
+    use_case = ValidTokenUseCase()
+
+    response = use_case.execute(request, session=session)
+    return JSONResponse(content= response, status_code=200)
+
+
+@company_router.patch("/resend")
+async def resend_token_router(
+    request: ResendTokenRequest,
+    session: Session = Depends(get_session)
+):
+
+    use_case = ResendTokenUseCase()
+
+    response = use_case.execute(request, session=session)
+    return JSONResponse(content= response, status_code=200)

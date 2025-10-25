@@ -6,7 +6,8 @@ from typing import List, Optional
 
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.configs.session_config import get_session
-from app.infrastructure.container.dependency_container import container
+# Repositories
+from app.infrastructure.repositories.impl.contact_repository_impl import ContactRepositoryImpl
 
 contact_router = APIRouter(
     prefix="/contatos",
@@ -35,7 +36,7 @@ async def list_contatos(
 ) -> List[dict]:
     """Lista contatos com filtros opcionais"""
     try:
-        contact_repo = container.contact_repository
+        contact_repo = ContactRepositoryImpl()
         
         if empresa_id:
             contatos = contact_repo.get_by_company(empresa_id, session)
@@ -81,7 +82,7 @@ async def get_contato(
 ) -> dict:
     """Busca contato por ID"""
     try:
-        contact_repo = container.contact_repository
+        contact_repo = ContactRepositoryImpl()
         contato = contact_repo.get_by_id(contato_id, session)
         
         if not contato:
@@ -114,7 +115,7 @@ async def list_contatos_by_empresa(
 ) -> List[dict]:
     """Lista contatos de uma empresa"""
     try:
-        contact_repo = container.contact_repository
+        contact_repo = ContactRepositoryImpl()
         contatos = contact_repo.get_by_company(empresa_id, session)
         
         return [
@@ -145,7 +146,7 @@ async def get_contato_by_email(
 ) -> dict:
     """Busca contato por email"""
     try:
-        contact_repo = container.contact_repository
+        contact_repo = ContactRepositoryImpl()
         contato = contact_repo.get_by_email(email, session)
         
         if not contato:
@@ -178,7 +179,7 @@ async def get_contato_principal(
 ) -> dict:
     """Busca contato principal da empresa"""
     try:
-        contact_repo = container.contact_repository
+        contact_repo = ContactRepositoryImpl()
         contato = contact_repo.get_primary_contact(empresa_id, session)
         
         if not contato:

@@ -20,7 +20,7 @@ class GetCompanyUseCase(UseCase[int, CompanyResponse]):
         """Executa o caso de uso de busca de empresa por ID"""
         try:
             # Busca empresa com relacionamentos
-            company = self.company_repository.get_with_relations(company_id, session)
+            company = self.company_repository.get_by_id(company_id, session)
             
             if not company:
                 raise CompanyNotFoundException(f"Empresa com ID {company_id} não encontrada")

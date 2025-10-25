@@ -6,7 +6,8 @@ from typing import List, Optional
 
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.configs.session_config import get_session
-from app.infrastructure.container.dependency_container import container
+# Repositories
+from app.infrastructure.repositories.impl.address_repository_impl import AddressRepositoryImplImpl
 
 address_router = APIRouter(
     prefix="/enderecos",
@@ -37,7 +38,7 @@ async def list_enderecos(
 ) -> List[dict]:
     """Lista endereços com filtros opcionais"""
     try:
-        address_repo = container.address_repository
+        address_repo = AddressRepositoryImpl()
         
         if empresa_id:
             enderecos = address_repo.get_by_company(empresa_id, session)
@@ -89,7 +90,7 @@ async def get_endereco(
 ) -> dict:
     """Busca endereço por ID"""
     try:
-        address_repo = container.address_repository
+        address_repo = AddressRepositoryImpl()
         endereco = address_repo.get_by_id(endereco_id, session)
         
         if not endereco:
@@ -125,7 +126,7 @@ async def list_enderecos_by_empresa(
 ) -> List[dict]:
     """Lista endereços de uma empresa"""
     try:
-        address_repo = container.address_repository
+        address_repo = AddressRepositoryImpl()
         enderecos = address_repo.get_by_company(empresa_id, session)
         
         return [
@@ -159,7 +160,7 @@ async def get_endereco_principal(
 ) -> dict:
     """Busca endereço principal da empresa"""
     try:
-        address_repo = container.address_repository
+        address_repo = AddressRepositoryImpl()
         endereco = address_repo.get_primary_address(empresa_id, session)
         
         if not endereco:
@@ -195,7 +196,7 @@ async def list_enderecos_by_cep(
 ) -> List[dict]:
     """Lista endereços por CEP"""
     try:
-        address_repo = container.address_repository
+        address_repo = AddressRepositoryImpl()
         enderecos = address_repo.get_by_cep(cep, session)
         
         return [
@@ -229,7 +230,7 @@ async def list_enderecos_by_cidade(
 ) -> List[dict]:
     """Lista endereços por cidade"""
     try:
-        address_repo = container.address_repository
+        address_repo = AddressRepositoryImpl()
         enderecos = address_repo.get_by_city(cidade, session)
         
         return [
@@ -263,7 +264,7 @@ async def list_enderecos_by_estado(
 ) -> List[dict]:
     """Lista endereços por estado"""
     try:
-        address_repo = container.address_repository
+        address_repo = AddressRepositoryImpl()
         enderecos = address_repo.get_by_state(uf.upper(), session)
         
         return [

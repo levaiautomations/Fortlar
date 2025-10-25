@@ -13,6 +13,8 @@ from app.domain.services.company_domain_service import CompanyDomainService
 from app.domain.exceptions.company_exceptions import CompanyAlreadyExistsException
 from app.infrastructure.repositories.company_repository_interface import ICompanyRepository
 from app.infrastructure.repositories.email_token_repository_interface import IEmailTokenRepository
+from app.infrastructure.repositories.impl.company_repository_impl import CompanyRepositoryImpl
+from app.infrastructure.repositories.impl.email_token_repository_impl import EmailTokenRepositoryImpl
 from app.infrastructure.utils.validate_password import validate_password
 from app.presentation.routers.request.company_request import CompanyRequest
 from app.presentation.routers.response.company_response import CompanyResponse
@@ -87,17 +89,11 @@ def _create_contact_entity(request: CompanyRequest) -> Contact:
 class CreateCompanyUseCase(UseCase[CompanyRequest, CompanyResponse]):
     """Use case para criação de empresas"""
 
-    def __init__(
-        self,
-        company_repository: ICompanyRepository,
-        email_token_repository: IEmailTokenRepository,
-        hash_service: HashService,
-        email_service: EmailService
-    ):
-        self.company_repo = company_repository
-        self.email_token_repo = email_token_repository
-        self.hash_service = hash_service
-        self.email_service = email_service
+    def __init__(self):
+        self.company_repo: ICompanyRepository = CompanyRepositoryImpl()
+        self.email_token_repo: IEmailTokenRepository = EmailTokenRepositoryImpl()
+        self.hash_service: HashService = HashService()
+        self.email_service: EmailService = EmailService()
 
 
     def execute(self, request: CompanyRequest, session=None) -> CompanyResponse:
@@ -142,13 +138,14 @@ class CreateCompanyUseCase(UseCase[CompanyRequest, CompanyResponse]):
     def _create_company_entity(self, request: CompanyRequest):
         """Cria a entidade Company usando o service de domínio"""
         password_hash = self.hash_service.hash_password(request.senha)
-        
+        cnpj_hash = self.hash_service.hash_password(request.cnpj)
+
         return CompanyDomainService.create_company(
-            cnpj=request.cnpj,
+            cnpj=cnpj_hash,
             razao_social=request.razao_social,
             nome_fantasia=request.nome_fantasia,
             senha_hash=password_hash,
-            id_vendedor=1,  # TODO: Obter do contexto de autenticação
+            id_vendedor=1,
             perfil=RoleEnum.CLIENTE,
             ativo=False
         )
