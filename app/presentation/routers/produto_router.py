@@ -15,10 +15,6 @@ from app.application.usecases.impl.bulk_create_produtos_use_case import BulkCrea
 # Services
 from app.application.service.excel_service import ExcelService
 
-# Repositories
-from app.infrastructure.repositories.impl.produto_repository_impl import ProdutoRepository
-from app.infrastructure.repositories.impl.categoria_repository_impl import CategoriaRepository
-from app.infrastructure.repositories.impl.subcategoria_repository_impl import SubcategoriaRepository
 
 # Configs
 from app.infrastructure.configs.database_config import Session

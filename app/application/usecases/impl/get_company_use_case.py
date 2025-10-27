@@ -7,14 +7,15 @@ from app.application.usecases.use_case import UseCase
 from app.domain.models.company_model import Company
 from app.domain.exceptions.company_exceptions import CompanyNotFoundException
 from app.infrastructure.repositories.company_repository_interface import ICompanyRepository
+from app.infrastructure.repositories.impl.company_repository_impl import CompanyRepositoryImpl
 from app.presentation.routers.response.company_response import CompanyResponse
 
 
 class GetCompanyUseCase(UseCase[int, CompanyResponse]):
     """Use case para buscar empresa por ID"""
 
-    def __init__(self, company_repository: ICompanyRepository):
-        self.company_repository = company_repository
+    def __init__(self):
+        self.company_repository:ICompanyRepository = CompanyRepositoryImpl()
 
     def execute(self, company_id: int, session=None) -> CompanyResponse:
         """Executa o caso de uso de busca de empresa por ID"""

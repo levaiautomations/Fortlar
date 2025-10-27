@@ -69,3 +69,8 @@ class IEmailTokenRepository(ABC):
     def get_expired_tokens(self, session: Session) -> List[EmailToken]:
         """Busca tokens expirados"""
         pass
+
+    @abstractmethod
+    def delete_by_company_id_and_type(self, company_id: int, token_type: EmailTokenTypeEnum, session: Session) -> None:
+        """Deleta tokens por empresa e tipo"""
+        pass

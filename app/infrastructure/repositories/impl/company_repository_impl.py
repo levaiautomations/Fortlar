@@ -62,6 +62,12 @@ class CompanyRepositoryImpl(ICompanyRepository, BaseRepository[Company]):
             company.senha_hash = new_password
             session.commit()
 
+    def update_company_ativo_status(self, company_id: int, ativo: bool, session: Session) -> None:
+        company = session.query(Company).filter(Company.id_empresa == company_id).first()
+        if company:
+            company.ativo = ativo
+            session.commit()
+
     # Métodos CRUD específicos para Company
     def get_by_cnpj(self, cnpj: str, session: Session) -> Optional[Company]:
         """Busca empresa por CNPJ"""

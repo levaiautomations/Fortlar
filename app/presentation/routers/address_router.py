@@ -1,13 +1,12 @@
 """Router para operações de Endereços"""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
-from fastapi.responses import JSONResponse
 from typing import List, Optional
 
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.configs.session_config import get_session
 # Repositories
-from app.infrastructure.repositories.impl.address_repository_impl import AddressRepositoryImplImpl
+from app.infrastructure.repositories.impl.address_repository_impl import AddressRepositoryImpl
 
 address_router = APIRouter(
     prefix="/enderecos",

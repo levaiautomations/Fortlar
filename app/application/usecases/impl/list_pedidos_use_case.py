@@ -7,15 +7,15 @@ from fastapi import HTTPException, status
 
 from app.application.usecases.use_case import UseCase
 from app.domain.models.pedido_model import Pedido, PedidoStatusEnum
-from app.infrastructure.repositories.pedido_repository_interface import IPedidoRepositoryImpl
-from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepositoryImplImpl
+from app.infrastructure.repositories.pedido_repository_interface import IPedidoRepository
+from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepositoryImpl
 
 
 class ListPedidosUseCase(UseCase[Dict[str, Any], List[Dict[str, Any]]]):
     """Use case para listar pedidos com filtros"""
 
     def __init__(self):
-        self.pedido_repository: IPedidoRepositoryImpl = PedidoRepositoryImplImpl()
+        self.pedido_repository: IPedidoRepository = PedidoRepositoryImpl()
 
     def execute(self, request: Dict[str, Any], session=None) -> List[Dict[str, Any]]:
         """Executa o caso de uso de listagem de pedidos"""

@@ -7,21 +7,21 @@ from decimal import Decimal
 from app.application.usecases.use_case import UseCase
 from app.application.service.excel_service import ExcelService
 from app.domain.models.produto_model import Produto
-from app.infrastructure.repositories.produto_repository_interface import IProdutoRepositoryImpl
-from app.infrastructure.repositories.categoria_repository_interface import ICategoriaRepositoryImpl
-from app.infrastructure.repositories.subcategoria_repository_interface import ISubcategoriaRepositoryImpl
-from app.infrastructure.repositories.impl.produto_repository_impl import ProdutoRepositoryImplImpl
-from app.infrastructure.repositories.impl.categoria_repository_impl import CategoriaRepositoryImplImpl
-from app.infrastructure.repositories.impl.subcategoria_repository_impl import SubcategoriaRepositoryImplImpl
+from app.infrastructure.repositories.produto_repository_interface import IProdutoRepository
+from app.infrastructure.repositories.categoria_repository_interface import ICategoriaRepository
+from app.infrastructure.repositories.subcategoria_repository_interface import ISubcategoriaRepository
+from app.infrastructure.repositories.impl.produto_repository_impl import ProdutoRepositoryImpl
+from app.infrastructure.repositories.impl.categoria_repository_impl import CategoriaRepositoryImpl
+from app.infrastructure.repositories.impl.subcategoria_repository_impl import SubcategoriaRepositoryImpl
 
 
 class BulkCreateProdutosUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
     """Use case para criação em lote de produtos a partir de planilha Excel"""
 
     def __init__(self):
-        self.produto_repository: IProdutoRepositoryImpl = ProdutoRepositoryImplImpl()
-        self.categoria_repository: ICategoriaRepositoryImpl = CategoriaRepositoryImplImpl()
-        self.subcategoria_repository: ISubcategoriaRepositoryImpl = SubcategoriaRepositoryImplImpl()
+        self.produto_repository: IProdutoRepository = ProdutoRepositoryImpl()
+        self.categoria_repository: ICategoriaRepository = CategoriaRepositoryImpl()
+        self.subcategoria_repository: ISubcategoriaRepository = SubcategoriaRepositoryImpl()
         self.excel_service: ExcelService = ExcelService()
 
     def execute(self, request: Dict[str, Any], session=None) -> Dict[str, Any]:

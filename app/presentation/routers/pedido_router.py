@@ -9,9 +9,6 @@ from app.application.usecases.impl.list_pedidos_use_case import ListPedidosUseCa
 from app.application.usecases.impl.get_pedido_use_case import GetPedidoUseCase
 from app.application.usecases.impl.list_pedidos_recentes_use_case import ListPedidosRecentesUseCase
 
-# Repositories
-from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepository
-
 # Configs
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.configs.session_config import get_session

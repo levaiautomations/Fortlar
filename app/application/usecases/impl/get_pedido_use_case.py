@@ -5,15 +5,15 @@ from fastapi import HTTPException, status
 
 from app.application.usecases.use_case import UseCase
 from app.domain.models.pedido_model import Pedido
-from app.infrastructure.repositories.pedido_repository_interface import IPedidoRepositoryImpl
-from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepositoryImplImpl
+from app.infrastructure.repositories.pedido_repository_interface import IPedidoRepository
+from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepositoryImpl
 
 
 class GetPedidoUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
     """Use case para buscar pedido por ID"""
 
     def __init__(self):
-        self.pedido_repository: IPedidoRepositoryImpl = PedidoRepositoryImplImpl()
+        self.pedido_repository: IPedidoRepository = PedidoRepositoryImpl()
 
     def execute(self, request: Dict[str, Any], session=None) -> Dict[str, Any]:
         """Executa o caso de uso de busca de pedido"""

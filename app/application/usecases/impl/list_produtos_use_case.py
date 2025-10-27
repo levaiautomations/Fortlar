@@ -5,15 +5,15 @@ from fastapi import HTTPException, status
 
 from app.application.usecases.use_case import UseCase
 from app.domain.models.produto_model import Produto
-from app.infrastructure.repositories.produto_repository_interface import IProdutoRepositoryImpl
-from app.infrastructure.repositories.impl.produto_repository_impl import ProdutoRepositoryImplImpl
+from app.infrastructure.repositories.produto_repository_interface import IProdutoRepository
+from app.infrastructure.repositories.impl.produto_repository_impl import ProdutoRepositoryImpl
 
 
 class ListProdutosUseCase(UseCase[Dict[str, Any], List[Dict[str, Any]]]):
     """Use case para listar produtos"""
 
     def __init__(self):
-        self.produto_repository: IProdutoRepositoryImpl = ProdutoRepositoryImplImpl()
+        self.produto_repository: IProdutoRepository = ProdutoRepositoryImpl()
 
     def execute(self, request: Dict[str, Any], session=None) -> List[Dict[str, Any]]:
         """Executa o caso de uso de listagem de produtos"""

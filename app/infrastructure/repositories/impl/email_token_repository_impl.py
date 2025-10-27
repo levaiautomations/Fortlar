@@ -84,3 +84,10 @@ class EmailTokenRepositoryImpl(IEmailTokenRepository, BaseRepository[EmailToken]
         from datetime import timedelta
         expiration_time = datetime.utcnow() - timedelta(hours=24)
         return session.query(EmailToken).filter(EmailToken.created_at < expiration_time).all()
+
+    def delete_by_company_id_and_type(self, company_id: int, token_type: EmailTokenTypeEnum, session: Session) -> None:
+        """Deleta tokens por empresa e tipo"""
+        session.query(EmailToken).filter(
+            and_(EmailToken.id_empresa == company_id, EmailToken.tipo == token_type)
+        ).delete()
+        session.flush()

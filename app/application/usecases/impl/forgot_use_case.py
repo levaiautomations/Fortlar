@@ -28,31 +28,38 @@ class ForgotPasswordUseCase(UseCase[ForgotPasswordRequest, None]):
         if not company:
             return
 
+        # Desativa a empresa para forçar redefinição de senha
+        self.company_repo.update_company_ativo_status(company.id_empresa, False, session)
+
         # Gera token de reset
         token = self.hash_service.generate_email_token(company.id_empresa)
 
-        # salva no banco
+        # Remove tokens antigos de reset de senha para esta empresa
+        self.email_token_repo.delete_by_company_id_and_type(
+            company.id_empresa, 
+            EmailTokenTypeEnum.RESET_SENHA, 
+            session
+        )
+
+        # Cria novo token de email
         email_token = EmailToken(
             id_empresa=company.id_empresa,
             token=token,
             tipo=EmailTokenTypeEnum.RESET_SENHA
         )
+
+        # Busca o email da empresa através do contato
+        if company.contatos and len(company.contatos) > 0:
+            email = company.contatos[0].email
+            
+            # Gera HTML do email
+            html = reset_password("https://meusite.com/reset-password", token)
+            
+            # Envia email
+            self.email_service.send_email(email, html, "Redefinição de Senha")
+
+        # Persiste token no banco
         self.email_token_repo.create_email_token(email_token, session)
         session.commit()
 
-        # TODO: enviar e-mail real
-        print(f"Enviar link para reset: https://suaapp.com/reset-password?token={token}&company_id={company.id_empresa}")
-
-
-    def send_email(self, company_id: int, email: str, session):
-        # Token de verificação
-        token = self.hash_service.generate_email_token(company_id)
-
-        email_token = EmailToken(id_empresa=company_id, token=token, tipo=EmailTokenTypeEnum.RESET_SENHA)
-
-        html = reset_password("https://meusite.com/ativar?token=123", token)
-
-        # Envio de e-mail
-        self.email_service.send_email(email, html,"Redefinição de Senha")
-
-        self.email_token_repo.create_email_token(email_token, session)
+        return dict(message="Email de redefinição de senha enviado com sucesso", company_id=company.id_empresa)

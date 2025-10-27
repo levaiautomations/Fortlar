@@ -28,6 +28,7 @@ from app.presentation.routers.pedido_router import pedido_router
 from app.presentation.routers.kit_router import kit_router
 from app.presentation.routers.contact_router import contact_router
 from app.presentation.routers.address_router import address_router
+from app.presentation.routers.email_token_router import email_token_router
 
 
 
@@ -91,6 +92,7 @@ application.include_router(pedido_router, prefix="/api", tags=["Pedidos"])
 application.include_router(kit_router, prefix="/api", tags=["Kits"])
 application.include_router(contact_router, prefix="/api", tags=["Contatos"])
 application.include_router(address_router, prefix="/api", tags=["Endereços"])
+application.include_router(email_token_router, prefix="/api", tags=["Token"])
 application.include_router(utils_router, prefix="/api", tags=["Utilitários"])
 
 # ==== Exception handlers ====

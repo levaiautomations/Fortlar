@@ -40,3 +40,7 @@ class ICompanyRepository(ABC):
     @abstractmethod
     def update_password(self, company_id: int, new_password: str, session: Session) -> None:
         pass
+
+    @abstractmethod
+    def update_company_ativo_status(self, company_id: int, ativo: bool, session: Session) -> None:
+        pass
