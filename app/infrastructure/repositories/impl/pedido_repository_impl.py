@@ -4,78 +4,83 @@ from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
 
-from app.domain.models.pedido_model import Pedido, PedidoStatusEnum
+from app.domain.models.order_model import Order, OrderStatusEnum
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.repositories.pedido_repository_interface import IPedidoRepository
-from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class PedidoRepositoryImpl(IPedidoRepository, BaseRepository[Pedido]):
+class PedidoRepositoryImpl(IPedidoRepository):
     """Repository para operações de Pedido com CRUD completo"""
 
-    def __init__(self):
-        super().__init__(Pedido)
-
     # Implementação dos métodos abstratos do IPedidoRepository
-    def create(self, pedido: Pedido, session: Session) -> Pedido:
+    def create(self, pedido: Order, session: Session) -> Order:
         """Cria um novo pedido"""
-        return super().create(pedido, session)
+        session.add(pedido)
+        session.flush()
+        return pedido
 
-    def get_by_id(self, pedido_id: int, session: Session) -> Optional[Pedido]:
+    def get_by_id(self, pedido_id: int, session: Session) -> Optional[Order]:
         """Busca pedido por ID"""
-        return super().get_by_id(pedido_id, session)
+        return session.query(Order).filter(Order.id == pedido_id).first()
 
-    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[Pedido]:
+    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[Order]:
         """Lista todos os pedidos"""
-        return super().get_all(session, skip, limit)
+        return session.query(Order).offset(skip).limit(limit).all()
 
-    def update(self, pedido: Pedido, session: Session) -> Pedido:
+    def update(self, pedido: Order, session: Session) -> Order:
         """Atualiza um pedido"""
-        return super().update(pedido, session)
+        session.merge(pedido)
+        session.flush()
+        return pedido
 
     def delete(self, pedido_id: int, session: Session) -> bool:
         """Deleta um pedido"""
-        return super().delete(pedido_id, session)
+        pedido = self.get_by_id(pedido_id, session)
+        if pedido:
+            session.delete(pedido)
+            session.flush()
+            return True
+        return False
 
-    def get_by_cliente(self, cliente_id: int, session: Session) -> List[Pedido]:
+    def get_by_cliente(self, cliente_id: int, session: Session) -> List[Order]:
         """Busca pedidos por cliente"""
-        return session.query(Pedido).filter(Pedido.id_cliente == cliente_id).all()
+        return session.query(Order).filter(Order.id_cliente == cliente_id).all()
 
-    def get_by_status(self, status: PedidoStatusEnum, session: Session) -> List[Pedido]:
+    def get_by_status(self, status: OrderStatusEnum, session: Session) -> List[Order]:
         """Busca pedidos por status"""
-        return session.query(Pedido).filter(Pedido.status == status).all()
+        return session.query(Order).filter(Order.status == status).all()
 
-    def get_by_date_range(self, start_date: datetime, end_date: datetime, session: Session) -> List[Pedido]:
+    def get_by_date_range(self, start_date: datetime, end_date: datetime, session: Session) -> List[Order]:
         """Busca pedidos por intervalo de datas"""
-        return session.query(Pedido).filter(
-            Pedido.data_pedido.between(start_date, end_date)
+        return session.query(Order).filter(
+            Order.data_pedido.between(start_date, end_date)
         ).all()
 
-    def get_by_cupom(self, cupom_id: int, session: Session) -> List[Pedido]:
+    def get_by_cupom(self, cupom_id: int, session: Session) -> List[Order]:
         """Busca pedidos por cupom"""
-        return session.query(Pedido).filter(Pedido.cupom_id == cupom_id).all()
+        return session.query(Order).filter(Order.cupom_id == cupom_id).all()
 
-    def get_pending_orders(self, session: Session) -> List[Pedido]:
+    def get_pending_orders(self, session: Session) -> List[Order]:
         """Busca pedidos pendentes"""
-        return session.query(Pedido).filter(
-            Pedido.status == PedidoStatusEnum.PENDENTE
+        return session.query(Order).filter(
+            Order.status == OrderStatusEnum.PENDENTE
         ).all()
 
-    def get_orders_by_value_range(self, min_value: Decimal, max_value: Decimal, session: Session) -> List[Pedido]:
+    def get_orders_by_value_range(self, min_value: Decimal, max_value: Decimal, session: Session) -> List[Order]:
         """Busca pedidos por faixa de valor"""
-        return session.query(Pedido).filter(
-            Pedido.valor_total.between(min_value, max_value)
+        return session.query(Order).filter(
+            Order.valor_total.between(min_value, max_value)
         ).all()
 
-    def get_recent_orders(self, days: int, session: Session) -> List[Pedido]:
+    def get_recent_orders(self, days: int, session: Session) -> List[Order]:
         """Busca pedidos recentes (últimos X dias)"""
         from datetime import timedelta
         start_date = datetime.now() - timedelta(days=days)
-        return session.query(Pedido).filter(
-            Pedido.data_pedido >= start_date
+        return session.query(Order).filter(
+            Order.data_pedido >= start_date
         ).all()
 
-    def update_status(self, pedido_id: int, status: PedidoStatusEnum, session: Session) -> bool:
+    def update_status(self, pedido_id: int, status: OrderStatusEnum, session: Session) -> bool:
         """Atualiza status do pedido"""
         pedido = self.get_by_id(pedido_id, session)
         if pedido:
@@ -84,9 +89,9 @@ class PedidoRepositoryImpl(IPedidoRepository, BaseRepository[Pedido]):
             return True
         return False
 
-    def get_orders_with_items(self, pedido_id: int, session: Session) -> Optional[Pedido]:
+    def get_orders_with_items(self, pedido_id: int, session: Session) -> Optional[Order]:
         """Busca pedido com itens"""
         from sqlalchemy.orm import joinedload
-        return session.query(Pedido).options(
-            joinedload(Pedido.itens)
-        ).filter(Pedido.id == pedido_id).first()
+        return session.query(Order).options(
+            joinedload(Order.itens)
+        ).filter(Order.id == pedido_id).first()

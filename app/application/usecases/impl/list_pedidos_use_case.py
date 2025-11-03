@@ -6,7 +6,7 @@ from decimal import Decimal
 from fastapi import HTTPException, status
 
 from app.application.usecases.use_case import UseCase
-from app.domain.models.pedido_model import Pedido, PedidoStatusEnum
+from app.domain.models.order_model import Order, OrderStatusEnum
 from app.infrastructure.repositories.pedido_repository_interface import IPedidoRepository
 from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepositoryImpl
 
@@ -49,13 +49,13 @@ class ListPedidosUseCase(UseCase[Dict[str, Any], List[Dict[str, Any]]]):
         self, session, skip: int, limit: int, cliente_id: Optional[int],
         status: Optional[str], cupom_id: Optional[int], start_date: Optional[datetime],
         end_date: Optional[datetime], min_value: Optional[float], max_value: Optional[float]
-    ) -> List[Pedido]:
+    ) -> List[Order]:
         """Aplica filtros na busca de pedidos"""
         if cliente_id:
             return self.pedido_repository.get_by_cliente(cliente_id, session)
         elif status:
             try:
-                status_enum = PedidoStatusEnum(status)
+                status_enum = OrderStatusEnum(status)
                 return self.pedido_repository.get_by_status(status_enum, session)
             except ValueError:
                 raise HTTPException(
@@ -75,7 +75,7 @@ class ListPedidosUseCase(UseCase[Dict[str, Any], List[Dict[str, Any]]]):
         else:
             return self.pedido_repository.get_all(session, skip, limit)
 
-    def _build_pedido_response(self, pedido: Pedido) -> Dict[str, Any]:
+    def _build_pedido_response(self, pedido: Order) -> Dict[str, Any]:
         """Constrói a resposta do pedido"""
         return {
             "id": pedido.id,

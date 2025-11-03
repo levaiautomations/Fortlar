@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from app.domain.models.email_token_modal import EmailToken
+from app.domain.models.email_token_model import EmailToken
 from app.domain.models.enumerations.email_token_type_enumerations import EmailTokenTypeEnum
 from app.infrastructure.configs.database_config import Session
 

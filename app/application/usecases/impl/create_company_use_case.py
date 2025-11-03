@@ -5,11 +5,11 @@ from app.application.service.email_service import EmailService
 from app.application.service.hash_service import HashService
 from app.application.usecases.use_case import UseCase
 from app.domain.models.address_model import Address
+from app.domain.models.company_model import Company
 from app.domain.models.contact_model import Contact
-from app.domain.models.email_token_modal import EmailToken
+from app.domain.models.email_token_model import EmailToken
 from app.domain.models.enumerations.email_token_type_enumerations import EmailTokenTypeEnum
 from app.domain.models.enumerations.role_enumerations import RoleEnum
-from app.domain.services.company_domain_service import CompanyDomainService
 from app.domain.exceptions.company_exceptions import CompanyAlreadyExistsException
 from app.infrastructure.repositories.company_repository_interface import ICompanyRepository
 from app.infrastructure.repositories.email_token_repository_interface import IEmailTokenRepository
@@ -140,7 +140,7 @@ class CreateCompanyUseCase(UseCase[CompanyRequest, CompanyResponse]):
         password_hash = self.hash_service.hash_password(request.senha)
         cnpj_hash = self.hash_service.hash_password(request.cnpj)
 
-        return CompanyDomainService.create_company(
+        return Company(
             cnpj=cnpj_hash,
             razao_social=request.razao_social,
             nome_fantasia=request.nome_fantasia,

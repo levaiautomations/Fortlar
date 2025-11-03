@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 
 from app.application.usecases.use_case import UseCase
-from app.domain.models.email_token_modal import EmailToken
+from app.domain.models.email_token_model import EmailToken
 from app.domain.models.enumerations.email_token_type_enumerations import EmailTokenTypeEnum
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.repositories.company_repository_interface import ICompanyRepository
@@ -24,7 +24,11 @@ class ResendTokenUseCase(UseCase[ResendTokenRequest, None]):
 
     def execute(self, data: ResendTokenRequest, session: Session = None):
         # Verifica se a empresa existe
-        company = self.company_repo.get_by_id(data.company_id, session)
+        if data.company_id:
+            company = self.company_repo.get_by_id(data.company_id, session)
+        else:
+            company = self.company_repo.find_by_email_or_cnpj(data.email.__str__(), session)
+
         if not company:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Empresa não encontrada")
 
@@ -34,19 +38,24 @@ class ResendTokenUseCase(UseCase[ResendTokenRequest, None]):
 
         email = company.contatos[0].email
 
-        # Remove tokens antigos de validação de email para esta empresa
-        self.email_token_repo.delete_by_company_id_and_type(
-            data.company_id, 
-            EmailTokenTypeEnum.VALIDACAO_EMAIL, 
-            session
-        )
+        token = self._send_verification_email(company.id_empresa, company.email_token, email, session)
 
-        # Gera novo token
-        token = self.hash_service.generate_email_token(data.company_id)
+        return dict(message="Token reenviado com sucesso", company_id=data.company_id, token=token)
 
-        # Cria novo token de email
+    def _send_verification_email(self, company_id: int, email_token, email: str, session) -> str:
+        """Envia email de verificação para a empresa"""
+        if email_token:
+            self.email_token_repo.delete_by_company_id_and_type(
+                company_id,
+                EmailTokenTypeEnum.VALIDACAO_EMAIL,
+                session
+            )
+
+        token = self.hash_service.generate_email_token(company_id)
+
+        # Cria token de email
         email_token = EmailToken(
-            id_empresa=data.company_id,
+            id_empresa=company_id,
             token=token,
             tipo=EmailTokenTypeEnum.VALIDACAO_EMAIL
         )
@@ -57,7 +66,7 @@ class ResendTokenUseCase(UseCase[ResendTokenRequest, None]):
         # Envia email
         self.email_service.send_email(email, html, "Reenvio de Token de Validação")
 
-        # Persiste token no banco
+        # Persiste token
         self.email_token_repo.create_email_token(email_token, session)
 
-        return dict(message="Token reenviado com sucesso", company_id=data.company_id)
+        return token

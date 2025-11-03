@@ -13,7 +13,7 @@ from app.application.usecases.impl.get_company_use_case import GetCompanyUseCase
 from app.application.usecases.impl.update_company_use_case import UpdateCompanyUseCase
 from app.application.usecases.impl.delete_company_use_case import DeleteCompanyUseCase
 
-# Use Cases - Produto
+# Use Cases - Product
 from app.application.usecases.impl.list_produtos_use_case import ListProdutosUseCase
 from app.application.usecases.impl.bulk_create_produtos_use_case import BulkCreateProdutosUseCase
 
@@ -40,12 +40,12 @@ from app.infrastructure.providers.impl.cnpj_provider_impl import CNPJProviderImp
 from app.infrastructure.repositories.impl.company_repository_impl import CompanyRepositoryImpl
 from app.infrastructure.repositories.impl.contact_repository_impl import ContactRepositoryImpl
 from app.infrastructure.repositories.impl.address_repository_impl import AddressRepositoryImpl
-from app.infrastructure.repositories.impl.produto_repository_impl import ProdutoRepositoryImpl
-from app.infrastructure.repositories.impl.categoria_repository_impl import CategoriaRepositoryImpl
+from app.infrastructure.repositories.impl.product_repository_impl import ProductRepositoryImpl
+from app.infrastructure.repositories.impl.category_repository_impl import CategoryRepositoryImpl
 from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepositoryImpl
 from app.infrastructure.repositories.impl.kit_repository_impl import KitRepository
 from app.infrastructure.repositories.impl.email_token_repository_impl import EmailTokenRepositoryImpl
-from app.infrastructure.repositories.impl.subcategoria_repository_impl import SubcategoriaRepositoryImpl
+from app.infrastructure.repositories.impl.subcategory_repository_impl import SubcategoryRepositoryImpl
 
 
 class DependencyContainer:
@@ -61,12 +61,12 @@ class DependencyContainer:
         self._company_repository = CompanyRepositoryImpl()
         self._contact_repository = ContactRepositoryImpl()
         self._address_repository = AddressRepositoryImpl()
-        self._produto_repository = ProdutoRepositoryImpl()
-        self._categoria_repository = CategoriaRepositoryImpl()
+        self._produto_repository = ProductRepositoryImpl()
+        self._categoria_repository = CategoryRepositoryImpl()
         self._pedido_repository = PedidoRepositoryImpl()
         self._kit_repository = KitRepository()
         self._email_token_repository = EmailTokenRepositoryImpl()
-        self._subcategoria_repository = SubcategoriaRepositoryImpl()
+        self._subcategoria_repository = SubcategoryRepositoryImpl()
         self._cep_provider = CEPProviderImpl()
         self._cnpj_provider = CNPJProviderImpl()
         # Use Cases - Company
@@ -93,7 +93,7 @@ class DependencyContainer:
             company_repository=self._company_repository
         )
 
-        # Use Cases - Produto
+        # Use Cases - Product
         self._list_produtos_use_case = ListProdutosUseCase(
             produto_repository=self._produto_repository
         )
@@ -166,7 +166,7 @@ class DependencyContainer:
     def delete_company_use_case(self) -> DeleteCompanyUseCase:
         return self._delete_company_use_case
 
-    # Produto Use Cases
+    # Product Use Cases
     @property
     def list_produtos_use_case(self) -> ListProdutosUseCase:
         return self._list_produtos_use_case
@@ -248,11 +248,11 @@ class DependencyContainer:
         return self._address_repository
 
     @property
-    def produto_repository(self) -> ProdutoRepositoryImpl:
+    def produto_repository(self) -> ProductRepositoryImpl:
         return self._produto_repository
 
     @property
-    def categoria_repository(self) -> CategoriaRepositoryImpl:
+    def categoria_repository(self) -> CategoryRepositoryImpl:
         return self._categoria_repository
 
     @property
@@ -264,7 +264,7 @@ class DependencyContainer:
         return self._kit_repository
 
     @property
-    def subcategoria_repository(self) -> SubcategoriaRepositoryImpl:
+    def subcategoria_repository(self) -> SubcategoryRepositoryImpl:
         return self._subcategoria_repository
 
     @property

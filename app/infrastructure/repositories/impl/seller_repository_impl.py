@@ -3,14 +3,10 @@ from typing import Optional, List
 from app.domain.models.seller_model import Seller
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.repositories.seller_repository_interface import ISellerRepository
-from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class SellerRepositoryImpl(ISellerRepository, BaseRepository[Seller]):
+class SellerRepositoryImpl(ISellerRepository):
     """Repository para operações de Seller com CRUD completo"""
-
-    def __init__(self):
-        super().__init__(Seller)
 
     def create(self, seller: Seller, session: Session) -> Seller:
         """Cria um novo vendedor"""

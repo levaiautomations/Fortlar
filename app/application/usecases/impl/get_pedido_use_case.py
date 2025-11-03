@@ -4,7 +4,7 @@ from typing import Dict, Any, Optional
 from fastapi import HTTPException, status
 
 from app.application.usecases.use_case import UseCase
-from app.domain.models.pedido_model import Pedido
+from app.domain.models.order_model import Order
 from app.infrastructure.repositories.pedido_repository_interface import IPedidoRepository
 from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepositoryImpl
 
@@ -49,7 +49,7 @@ class GetPedidoUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
                 detail=f"Erro ao buscar pedido: {str(e)}"
             )
 
-    def _build_pedido_response(self, pedido: Pedido, include_items: bool = False) -> Dict[str, Any]:
+    def _build_pedido_response(self, pedido: Order, include_items: bool = False) -> Dict[str, Any]:
         """Constrói a resposta do pedido"""
         result = {
             "id": pedido.id,

@@ -11,7 +11,7 @@ from app.infrastructure.repositories.email_token_repository_interface import IEm
 from app.infrastructure.repositories.impl.company_repository_impl import CompanyRepositoryImpl
 from app.infrastructure.repositories.impl.email_token_repository_impl import EmailTokenRepositoryImpl
 from app.presentation.routers.request.forgot_password_request import ForgotPasswordRequest
-from app.domain.models.email_token_modal import EmailToken
+from app.domain.models.email_token_model import EmailToken
 from app.infrastructure.configs.database_config import Session
 
 class ForgotPasswordUseCase(UseCase[ForgotPasswordRequest, None]):

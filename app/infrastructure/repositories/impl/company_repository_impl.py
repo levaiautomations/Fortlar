@@ -7,14 +7,10 @@ from app.domain.models.company_model import Company
 from app.domain.models.contact_model import Contact
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.repositories.company_repository_interface import ICompanyRepository
-from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class CompanyRepositoryImpl(ICompanyRepository, BaseRepository[Company]):
+class CompanyRepositoryImpl(ICompanyRepository):
     """Repository para operações de Company com CRUD completo"""
-
-    def __init__(self):
-        super().__init__(Company)
 
     def exists_by_cnpj(self, cnpj: str, session: Session) -> bool:
         return session.query(Company).filter(Company.cnpj == cnpj).first() is not None

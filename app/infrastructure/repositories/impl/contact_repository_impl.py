@@ -5,35 +5,40 @@ from typing import Optional, List
 from app.domain.models.contact_model import Contact
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.repositories.contact_repository_interface import IContactRepository
-from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class ContactRepositoryImpl(IContactRepository, BaseRepository[Contact]):
+class ContactRepositoryImpl(IContactRepository):
     """Repository para operações de Contact com CRUD completo"""
-
-    def __init__(self):
-        super().__init__(Contact)
 
     # Implementação dos métodos abstratos do IContactRepository
     def create(self, contact: Contact, session: Session) -> Contact:
         """Cria um novo contato"""
-        return super().create(contact, session)
+        session.add(contact)
+        session.flush()
+        return contact
 
     def get_by_id(self, contact_id: int, session: Session) -> Optional[Contact]:
         """Busca contato por ID"""
-        return super().get_by_id(contact_id, session)
+        return session.query(Contact).filter(Contact.id_contato == contact_id).first()
 
     def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[Contact]:
         """Lista todos os contatos"""
-        return super().get_all(session, skip, limit)
+        return session.query(Contact).offset(skip).limit(limit).all()
 
     def update(self, contact: Contact, session: Session) -> Contact:
         """Atualiza um contato"""
-        return super().update(contact, session)
+        session.merge(contact)
+        session.flush()
+        return contact
 
     def delete(self, contact_id: int, session: Session) -> bool:
         """Deleta um contato"""
-        return super().delete(contact_id, session)
+        contact = self.get_by_id(contact_id, session)
+        if contact:
+            session.delete(contact)
+            session.flush()
+            return True
+        return False
 
     def get_by_email(self, email: str, session: Session) -> Optional[Contact]:
         """Busca contato por email"""

@@ -3,11 +3,20 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from fastapi.responses import JSONResponse
 from typing import List
+from loguru import logger
 
 # Use Cases
 from app.application.usecases.impl.list_pedidos_use_case import ListPedidosUseCase
 from app.application.usecases.impl.get_pedido_use_case import GetPedidoUseCase
 from app.application.usecases.impl.list_pedidos_recentes_use_case import ListPedidosRecentesUseCase
+
+# Services
+from app.application.service.email_service import EmailService
+from app.application.service.email.template.pedido_template import pedido_html
+
+# Repositories
+from app.infrastructure.repositories.impl.company_repository_impl import CompanyRepositoryImpl
+from app.infrastructure.repositories.impl.product_repository_impl import ProductRepositoryImpl
 
 # Configs
 from app.infrastructure.configs.database_config import Session
@@ -18,7 +27,8 @@ from app.presentation.routers.request.pedido_request import (
     GetPedidoRequest,
     ListPedidosByClienteRequest,
     ListPedidosByStatusRequest,
-    ListPedidosRecentesRequest
+    ListPedidosRecentesRequest,
+    EnvioPedidoRequest
 )
 from app.presentation.routers.response.pedido_response import (
     PedidoResponse,
@@ -180,3 +190,107 @@ async def list_pedidos_recentes(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar pedidos recentes: {str(e)}")
+
+
+@pedido_router.post(
+    "/enviar",
+    summary="Enviar pedido por email",
+    description="Recebe o carrinho e envia um email formatado em HTML para a empresa com os detalhes do pedido",
+    response_class=JSONResponse
+)
+async def enviar_pedido(
+    request: EnvioPedidoRequest,
+    session: Session = Depends(get_session),
+    current_user = Depends(verify_user_permission())
+):
+    """
+    Envia pedido por email.
+    
+    Recebe o carrinho com itens (produtos, quantidades, preços) e a forma de pagamento,
+    busca as informações dos produtos, gera um HTML formatado e envia por email para a empresa.
+    """
+    try:
+        logger.info(f"=== Enviando pedido para cliente {request.id_cliente} ===")
+        
+        # Inicializa repositories e services
+        company_repo = CompanyRepositoryImpl()
+        product_repo = ProductRepositoryImpl()
+        email_service = EmailService()
+        
+        # Busca empresa com contatos
+        company = company_repo.get_with_relations(request.id_cliente, session)
+        if not company:
+            raise HTTPException(status_code=404, detail=f"Empresa com ID {request.id_cliente} não encontrada")
+        
+        # Verifica se empresa tem email cadastrado
+        if not company.contatos or len(company.contatos) == 0:
+            raise HTTPException(
+                status_code=400, 
+                detail="Empresa não possui contato com email cadastrado"
+            )
+        
+        # Pega o primeiro email dos contatos
+        email_empresa = company.contatos[0].email
+        if not email_empresa:
+            raise HTTPException(
+                status_code=400,
+                detail="Empresa não possui email cadastrado nos contatos"
+            )
+        
+        # Busca produtos e monta lista formatada
+        itens_formatados = []
+        valor_total = 0.0
+        
+        for item_carrinho in request.itens:
+            # Busca produto
+            produto = product_repo.get_by_id(item_carrinho.id_produto, session)
+            if not produto:
+                logger.warning(f"Produto com ID {item_carrinho.id_produto} não encontrado")
+                continue
+            
+            # Calcula subtotal
+            subtotal = float(item_carrinho.preco_unitario) * item_carrinho.quantidade
+            valor_total += subtotal
+            
+            # Formata item
+            itens_formatados.append({
+                'nome': produto.nome,
+                'quantidade': item_carrinho.quantidade,
+                'preco_unitario': float(item_carrinho.preco_unitario),
+                'subtotal': subtotal
+            })
+        
+        if not itens_formatados:
+            raise HTTPException(
+                status_code=400,
+                detail="Nenhum produto válido encontrado no carrinho"
+            )
+        
+        # Gera HTML do pedido
+        html_email = pedido_html(
+            itens=itens_formatados,
+            valor_total=valor_total,
+            forma_pagamento=request.forma_pagamento
+        )
+        
+        # Envia email
+        subject = f"Novo Pedido - Fortlar - Total: R$ {valor_total:.2f}"
+        email_service.send_email(email_empresa, html_email, subject)
+        
+        logger.info(f"✅ Email de pedido enviado com sucesso para {email_empresa}")
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Pedido enviado por email com sucesso",
+                "email_enviado": email_empresa,
+                "valor_total": valor_total,
+                "quantidade_itens": len(itens_formatados)
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Erro ao enviar pedido por email: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao enviar pedido por email: {str(e)}")

@@ -1,20 +1,16 @@
 from typing import Optional, List
 from datetime import datetime
 
-from app.domain.models.email_token_modal import EmailToken
+from app.domain.models.email_token_model import EmailToken
 from app.domain.models.enumerations.email_token_type_enumerations import EmailTokenTypeEnum
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.repositories.email_token_repository_interface import IEmailTokenRepository
-from app.infrastructure.repositories.base_repository import BaseRepository
 
 from sqlalchemy import and_
 
 
-class EmailTokenRepositoryImpl(IEmailTokenRepository, BaseRepository[EmailToken]):
+class EmailTokenRepositoryImpl(IEmailTokenRepository):
     """Repository para operações de EmailToken com CRUD completo"""
-
-    def __init__(self):
-        super().__init__(EmailToken)
 
     def create(self, email_token: EmailToken, session: Session) -> EmailToken:
         """Cria um novo token de email"""

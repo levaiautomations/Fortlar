@@ -15,5 +15,6 @@ class Origem(Base, TimestampMixin, BaseMixin):
     # Relacionamentos
     empresas: Mapped[List['Company']] = relationship('Company', back_populates='origem')
 
-
+    def __init__(self, descricao):
+        self.descricao = descricao
 

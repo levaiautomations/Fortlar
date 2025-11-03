@@ -1,32 +1,28 @@
 from typing import Optional, List
 
-from app.domain.models.ramo_atividade_model import RamoAtividade
+from app.domain.models.activity_branch_model import ActivityBranch
 from app.infrastructure.configs.database_config import Session
 from app.infrastructure.repositories.ramo_atividade_repository_interface import IRamoAtividadeRepository
-from app.infrastructure.repositories.base_repository import BaseRepository
 
 
-class RamoAtividadeRepositoryImpl(IRamoAtividadeRepository, BaseRepository[RamoAtividade]):
+class RamoAtividadeRepositoryImpl(IRamoAtividadeRepository):
     """Repository para operações de RamoAtividade com CRUD completo"""
 
-    def __init__(self):
-        super().__init__(RamoAtividade)
-
-    def create(self, ramo_atividade: RamoAtividade, session: Session) -> RamoAtividade:
+    def create(self, ramo_atividade: ActivityBranch, session: Session) -> ActivityBranch:
         """Cria um novo ramo de atividade"""
         session.add(ramo_atividade)
         session.flush()
         return ramo_atividade
 
-    def get_by_id(self, ramo_id: int, session: Session) -> Optional[RamoAtividade]:
+    def get_by_id(self, ramo_id: int, session: Session) -> Optional[ActivityBranch]:
         """Busca ramo de atividade por ID"""
-        return session.query(RamoAtividade).filter(RamoAtividade.id == ramo_id).first()
+        return session.query(ActivityBranch).filter(ActivityBranch.id == ramo_id).first()
 
-    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[RamoAtividade]:
+    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[ActivityBranch]:
         """Lista todos os ramos de atividade"""
-        return session.query(RamoAtividade).offset(skip).limit(limit).all()
+        return session.query(ActivityBranch).offset(skip).limit(limit).all()
 
-    def update(self, ramo_atividade: RamoAtividade, session: Session) -> RamoAtividade:
+    def update(self, ramo_atividade: ActivityBranch, session: Session) -> ActivityBranch:
         """Atualiza um ramo de atividade"""
         session.merge(ramo_atividade)
         session.flush()
@@ -43,14 +39,14 @@ class RamoAtividadeRepositoryImpl(IRamoAtividadeRepository, BaseRepository[RamoA
 
     def exists_by_id(self, ramo_id: int, session: Session) -> bool:
         """Verifica se ramo de atividade existe por ID"""
-        return session.query(RamoAtividade).filter(RamoAtividade.id == ramo_id).first() is not None
+        return session.query(ActivityBranch).filter(ActivityBranch.id == ramo_id).first() is not None
 
-    def search_by_description(self, description: str, session: Session) -> List[RamoAtividade]:
+    def search_by_description(self, description: str, session: Session) -> List[ActivityBranch]:
         """Busca ramos de atividade por descrição"""
-        return session.query(RamoAtividade).filter(
-            RamoAtividade.descricao.ilike(f"%{description}%")
+        return session.query(ActivityBranch).filter(
+            ActivityBranch.descricao.ilike(f"%{description}%")
         ).all()
 
-    def get_by_description(self, description: str, session: Session) -> Optional[RamoAtividade]:
+    def get_by_description(self, description: str, session: Session) -> Optional[ActivityBranch]:
         """Busca ramo de atividade por descrição exata"""
-        return session.query(RamoAtividade).filter(RamoAtividade.descricao == description).first()
+        return session.query(ActivityBranch).filter(ActivityBranch.descricao == description).first()

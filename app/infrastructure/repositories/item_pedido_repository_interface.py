@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from app.domain.models.item_pedido_model import ItemPedido
+from app.domain.models.order_item_model import OrderItem
 from app.infrastructure.configs.database_config import Session
 
 
@@ -9,22 +9,22 @@ class IItemPedidoRepository(ABC):
     """Interface para operações de ItemPedido"""
 
     @abstractmethod
-    def create(self, item_pedido: ItemPedido, session: Session) -> ItemPedido:
+    def create(self, item_pedido: OrderItem, session: Session) -> OrderItem:
         """Cria um novo item de pedido"""
         pass
 
     @abstractmethod
-    def get_by_id(self, item_id: int, session: Session) -> Optional[ItemPedido]:
+    def get_by_id(self, item_id: int, session: Session) -> Optional[OrderItem]:
         """Busca item de pedido por ID"""
         pass
 
     @abstractmethod
-    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[ItemPedido]:
+    def get_all(self, session: Session, skip: int = 0, limit: int = 100) -> List[OrderItem]:
         """Lista todos os itens de pedido"""
         pass
 
     @abstractmethod
-    def update(self, item_pedido: ItemPedido, session: Session) -> ItemPedido:
+    def update(self, item_pedido: OrderItem, session: Session) -> OrderItem:
         """Atualiza um item de pedido"""
         pass
 
@@ -34,12 +34,12 @@ class IItemPedidoRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_pedido_id(self, pedido_id: int, session: Session) -> List[ItemPedido]:
+    def get_by_pedido_id(self, pedido_id: int, session: Session) -> List[OrderItem]:
         """Busca itens por ID do pedido"""
         pass
 
     @abstractmethod
-    def get_by_produto_id(self, produto_id: int, session: Session) -> List[ItemPedido]:
+    def get_by_produto_id(self, produto_id: int, session: Session) -> List[OrderItem]:
         """Busca itens por ID do produto"""
         pass
 

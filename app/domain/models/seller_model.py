@@ -15,3 +15,6 @@ class Seller(Base, TimestampMixin, BaseMixin):
 
     # Relacionamentos
     empresa: Mapped[List['Company']] = relationship('Company', back_populates='vendedor')
+
+    def __init__(self, nome):
+        self.nome = nome

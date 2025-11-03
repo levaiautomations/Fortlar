@@ -1,6 +1,6 @@
 """DTOs para requests de pedidos"""
 
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -37,3 +37,17 @@ class ListPedidosByStatusRequest(BaseModel):
 class ListPedidosRecentesRequest(BaseModel):
     """Request para listar pedidos recentes"""
     days: int = Field(7, ge=1, le=365, description="Número de dias")
+
+
+class ItemCarrinhoRequest(BaseModel):
+    """Item do carrinho"""
+    id_produto: int = Field(..., description="ID do produto")
+    quantidade: int = Field(..., ge=1, description="Quantidade do produto")
+    preco_unitario: float = Field(..., ge=0, description="Preço unitário do produto")
+
+
+class EnvioPedidoRequest(BaseModel):
+    """Request para envio de pedido"""
+    id_cliente: int = Field(..., description="ID do cliente (empresa)")
+    itens: List[ItemCarrinhoRequest] = Field(..., min_items=1, description="Lista de itens do carrinho")
+    forma_pagamento: str = Field(..., description="Forma de pagamento")
