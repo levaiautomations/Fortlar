@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ProductResponse(BaseModel):
@@ -22,5 +22,13 @@ class ProductResponse(BaseModel):
     categoria: Optional[str] = None
     subcategoria: Optional[str] = None
     imagens: List[str] = []
+    avista: Optional[float] = None
+    dias_30: Optional[float] = Field(None, alias="30_dias")
+    dias_60: Optional[float] = Field(None, alias="60_dias")
+    kits: List['ProductResponse'] = []
+    
+    class Config:
+        populate_by_name = True
+        # Permite modelos recursivos
 
 

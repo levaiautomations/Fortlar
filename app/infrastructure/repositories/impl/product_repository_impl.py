@@ -43,7 +43,9 @@ class ProductRepositoryImpl(IProductRepository):
 
     def get_by_codigo(self, codigo: str, session: Session) -> Optional[Product]:
         """Busca product por código"""
-        return session.query(Product).filter(Product.codigo == codigo).first()
+        # Garante que codigo seja string (pode vir como int do banco)
+        codigo_str = str(codigo) if codigo is not None else None
+        return session.query(Product).filter(Product.codigo == codigo_str).first()
 
     def get_by_categoria(self, categoria_id: int, session: Session) -> List[Product]:
         """Busca products por categoria"""
@@ -57,11 +59,40 @@ class ProductRepositoryImpl(IProductRepository):
         """Busca products ativos"""
         return session.query(Product).filter(Product.ativo == True).all()
 
-    def search_by_name(self, name: str, session: Session) -> List[Product]:
+    def search_by_name(self, name: str, session: Session, exclude_kits: bool = False) -> List[Product]:
         """Busca products por nome"""
-        return session.query(Product).filter(
+        from sqlalchemy import exists
+        
+        query = session.query(Product).filter(
             Product.nome.ilike(f"%{name}%")
-        ).all()
+        )
+        
+        # A filtragem de kits será feita após buscar os produtos para evitar problemas de tipo no PostgreSQL
+        products = query.all()
+        
+        # Se exclude_kits, filtra produtos que têm cod_kit E têm produto pai correspondente
+        if exclude_kits:
+            filtered_products = []
+            for product in products:
+                # Se não tem cod_kit, inclui na lista
+                if product.cod_kit is None:
+                    filtered_products.append(product)
+                else:
+                    # Se tem cod_kit, verifica se existe produto pai
+                    # Converte cod_kit para string (pode vir como int do banco)
+                    cod_kit_str = str(product.cod_kit) if product.cod_kit is not None else None
+                    if cod_kit_str:
+                        parent = self.get_by_codigo(cod_kit_str, session)
+                        # Só exclui se tiver produto pai (não inclui na lista)
+                        # Se não tiver pai, inclui na lista
+                        if not parent:
+                            filtered_products.append(product)
+                    else:
+                        # Se cod_kit for None após conversão, inclui na lista
+                        filtered_products.append(product)
+            return filtered_products
+        
+        return products
 
     def get_by_price_range(self, min_price: Decimal, max_price: Decimal, session: Session) -> List[Product]:
         """Busca products por faixa de preço"""
@@ -102,10 +133,11 @@ class ProductRepositoryImpl(IProductRepository):
         active_only: bool = True,
         order_by_price: Optional[str] = None,
         skip: int = 0,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        exclude_kits: bool = False
     ) -> List[Product]:
         """Busca produtos com filtros e ordenação. Se limit=None, retorna todos os registros"""
-        from sqlalchemy import asc, desc
+        from sqlalchemy import asc, desc, exists
         
         query = session.query(Product)
         
@@ -136,5 +168,51 @@ class ProductRepositoryImpl(IProductRepository):
         # Aplica limit apenas se fornecido
         if limit is not None:
             query = query.limit(limit)
+        
+        # A filtragem de kits será feita após buscar os produtos para evitar problemas de tipo no PostgreSQL
+        products = query.all()
+        
+        # Se exclude_kits, filtra produtos que têm cod_kit E têm produto pai correspondente
+        if exclude_kits:
+            filtered_products = []
+            for product in products:
+                # Se não tem cod_kit, inclui na lista
+                if product.cod_kit is None:
+                    filtered_products.append(product)
+                else:
+                    # Se tem cod_kit, verifica se existe produto pai
+                    # Converte cod_kit para string (pode vir como int do banco)
+                    cod_kit_str = str(product.cod_kit) if product.cod_kit is not None else None
+                    if cod_kit_str:
+                        parent = self.get_by_codigo(cod_kit_str, session)
+                        # Só exclui se tiver produto pai (não inclui na lista)
+                        # Se não tiver pai, inclui na lista
+                        if not parent:
+                            filtered_products.append(product)
+                    else:
+                        # Se cod_kit for None após conversão, inclui na lista
+                        filtered_products.append(product)
+            return filtered_products
+        
+        return products
+
+    def get_by_cod_kit(self, cod_kit: str, exclude_product_id: Optional[int] = None, session: Session = None) -> List[Product]:
+        """
+        Busca produtos que pertencem a um kit.
+        
+        Parâmetro cod_kit: código do produto base (produto com cod_kit = null)
+        Retorna: produtos onde cod_kit == cod_kit (itens que pertencem ao kit)
+        
+        Exemplo:
+        - Produto base: codigo="9090", cod_kit=null
+        - Itens do kit: cod_kit="9090"
+        - Busca: get_by_cod_kit("9090") retorna todos os produtos com cod_kit="9090"
+        """
+        # Garante que cod_kit seja string (pode vir como int do banco)
+        cod_kit_str = str(cod_kit) if cod_kit is not None else None
+        query = session.query(Product).filter(Product.cod_kit == cod_kit_str)
+        
+        if exclude_product_id is not None:
+            query = query.filter(Product.id_produto != exclude_product_id)
         
         return query.all()

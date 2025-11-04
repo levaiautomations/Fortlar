@@ -13,7 +13,7 @@ class Regions(Base, TimestampMixin, BaseMixin):
     """Modelo de domínio para Regiões"""
     __tablename__ = 'regioes'
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id_regiao: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     estado: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     desconto_0: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     desconto_30: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)

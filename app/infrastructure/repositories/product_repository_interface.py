@@ -47,7 +47,7 @@ class IProductRepository(ABC):
         pass
 
     @abstractmethod
-    def search_by_name(self, name: str, session: Session) -> List[Product]:
+    def search_by_name(self, name: str, session: Session, exclude_kits: bool = False) -> List[Product]:
         pass
 
     @abstractmethod
@@ -63,7 +63,13 @@ class IProductRepository(ABC):
         active_only: bool = True,
         order_by_price: Optional[str] = None,
         skip: int = 0,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        exclude_kits: bool = False
     ) -> List[Product]:
         """Busca produtos com filtros e ordenação. Se limit=None, retorna todos os registros"""
+        pass
+
+    @abstractmethod
+    def get_by_cod_kit(self, cod_kit: str, exclude_product_id: Optional[int] = None, session: Session = None) -> List[Product]:
+        """Busca produtos por cod_kit, opcionalmente excluindo um produto específico"""
         pass

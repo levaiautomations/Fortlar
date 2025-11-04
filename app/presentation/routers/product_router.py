@@ -44,10 +44,11 @@ produto_router = APIRouter(
 @produto_router.get(
     "",
     summary="Listar produtos",
-    description="Lista todos os produtos com filtros opcionais consolidados",
+    description="Lista todos os produtos com filtros opcionais consolidados e preços calculados por estado",
     response_model=List[ProductResponse]
 )
 async def list_products(
+    estado: str = Query(..., description="Estado para cálculo de descontos (ex: SP, MG, ES)"),
     id_category: Optional[int] = Query(None, description="Filtrar por ID da categoria"),
     id_subcategory: Optional[int] = Query(None, description="Filtrar por ID da subcategoria"),
     order_price: Optional[str] = Query(None, description="Ordenar por preço: 'ASC' ou 'DESC'"),
@@ -58,13 +59,24 @@ async def list_products(
     current_user = Depends(verify_user_permission(role=RoleEnum.CLIENTE))
 ) -> List[ProductResponse]:
     """
-    Lista produtos com filtros opcionais consolidados.
+    Lista produtos com filtros opcionais consolidados e preços calculados por estado.
+    
+    **Parâmetros obrigatórios:**
+    - estado: Estado para cálculo de descontos (MG, ES ou qualquer outro que usará SP)
     
     **Filtros disponíveis:**
-    - Sem parâmetros: retorna todos os produtos
     - id_category: filtra por categoria
     - id_category + id_subcategory: filtra por categoria e subcategoria
     - order_price: ordena por preço ('ASC' ou 'DESC')
+    
+    **Lógica de descontos:**
+    - Estados MG e ES: usam os descontos específicos de cada estado
+    - Outros estados: usam os descontos de SP
+    
+    **Campos calculados retornados:**
+    - avista: valor_base * (1 - desconto_0)
+    - 30_dias: valor_base * (1 - desconto_30)
+    - 60_dias: valor_base * (1 - desconto_60)
     
     **Autenticação necessária**: Bearer Token JWT
     
@@ -83,6 +95,7 @@ async def list_products(
         
         use_case: ListProductsUseCase = ListProductsUseCase()
         request_data = {
+            'estado': estado,
             'id_category': id_category,
             'id_subcategory': id_subcategory,
             'order_price': order_price.upper() if order_price else None,
@@ -101,16 +114,30 @@ async def list_products(
 @produto_router.get(
     "/{product_id}",
     summary="Buscar produto por ID",
-    description="Busca um produto específico pelo ID",
+    description="Busca um produto específico pelo ID com preços calculados por estado",
     response_model=ProductResponse
 )
 async def get_product(
     product_id: int = Path(..., description="ID do produto"),
+    estado: str = Query(..., description="Estado para cálculo de descontos (ex: SP, MG, ES)"),
     session: Session = Depends(get_session),
     current_user = Depends(verify_user_permission(role=RoleEnum.CLIENTE))
 ) -> ProductResponse:
     """
-    Busca produto por ID.
+    Busca produto por ID com preços calculados por estado.
+    
+    **Parâmetros obrigatórios:**
+    - product_id: ID do produto
+    - estado: Estado para cálculo de descontos (MG, ES ou qualquer outro que usará SP)
+    
+    **Lógica de descontos:**
+    - Estados MG e ES: usam os descontos específicos de cada estado
+    - Outros estados: usam os descontos de SP
+    
+    **Campos calculados retornados:**
+    - avista: valor_base * (1 - desconto_0)
+    - dias_30: valor_base * (1 - desconto_30)
+    - dias_60: valor_base * (1 - desconto_60)
     
     **Autenticação necessária**: Bearer Token JWT
     
@@ -121,7 +148,11 @@ async def get_product(
     try:
         from app.application.usecases.impl.get_product_use_case import GetProductUseCase
         use_case: GetProductUseCase = GetProductUseCase()
-        product_data = use_case.execute(product_id, session)
+        request_data = {
+            'product_id': product_id,
+            'estado': estado
+        }
+        product_data = use_case.execute(request_data, session)
         return ProductResponse(**product_data)
     except HTTPException:
         raise
