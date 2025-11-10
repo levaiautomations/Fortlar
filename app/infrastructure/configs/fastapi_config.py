@@ -24,11 +24,12 @@ from app.presentation.routers.password_router import password_router
 from app.presentation.routers.company_router import company_router
 from app.presentation.routers.product_router import produto_router
 from app.presentation.routers.category_router import category_router
-from app.presentation.routers.pedido_router import pedido_router
+from app.presentation.routers.order_router import order_router
 from app.presentation.routers.contact_router import contact_router
 from app.presentation.routers.address_router import address_router
 from app.presentation.routers.email_token_router import email_token_router
 from app.presentation.routers.region_router import region_router
+from app.presentation.routers.upload_router import upload_router
 
 
 
@@ -38,12 +39,12 @@ application = FastAPI(
     description="""
     ## API do Sistema Fortlar
     
-    Sistema de gestão de empresas, produtos, pedidos e kits.
+    Sistema de gestão de empresas, produtos, orders e kits.
     
     ### Funcionalidades Principais:
     - **Empresas**: Gestão completa de empresas com endereços e contatos
     - **Produtos**: Catálogo de produtos com categorias e preços
-    - **Pedidos**: Sistema de pedidos com itens e status
+    - **Orders**: Sistema de orders com itens e status
     - **Kits**: Gestão de kits de produtos
     - **Categorias**: Organização de produtos por categorias
     
@@ -88,12 +89,13 @@ application.include_router(password_router, prefix="/api", tags=["Autenticação
 application.include_router(company_router, prefix="/api", tags=["Empresas"])
 application.include_router(produto_router, prefix="/api", tags=["Produtos"])
 application.include_router(category_router, prefix="/api", tags=["Categorias"])
-application.include_router(pedido_router, prefix="/api", tags=["Pedidos"])
+application.include_router(order_router, prefix="/api", tags=["Orders"])
 application.include_router(contact_router, prefix="/api", tags=["Contatos"])
 application.include_router(address_router, prefix="/api", tags=["Endereços"])
 application.include_router(email_token_router, prefix="/api", tags=["Token"])
 application.include_router(region_router, prefix="/api", tags=["Regiões"])
 application.include_router(utils_router, prefix="/api", tags=["Utilitários"])
+application.include_router(upload_router, prefix="/api", tags=["Upload"])
 
 # ==== Exception handlers ====
 @application.exception_handler(ExistingRecordException)

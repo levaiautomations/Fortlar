@@ -19,7 +19,7 @@ class Coupon(Base, TimestampMixin, BaseMixin):
     """Modelo de domínio para Cupom"""
     __tablename__ = 'cupons'
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id_cupom: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     codigo: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
     tipo: Mapped[CouponTypeEnum] = mapped_column(
         Enum(CouponTypeEnum, name='tipo_cupom'), 

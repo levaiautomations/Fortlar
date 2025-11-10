@@ -31,7 +31,7 @@ class Product(Base, TimestampMixin, BaseMixin):
         back_populates='produto', 
         cascade='all,delete-orphan'
     )
-    # itens_pedido: Mapped[List['OrderItem']] = relationship('OrderItem', back_populates='produto')
+    itens_pedido: Mapped[List['OrderItem']] = relationship('OrderItem', back_populates='produto')
 
 
     def __init__(self, codigo, nome, id_categoria, id_subcategoria, valor_base, quantidade, cod_kit=None, descricao=None, ativo=True):

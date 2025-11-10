@@ -1,4 +1,4 @@
-"""Interface do repository para Pedido"""
+"""Interface do repository para Order"""
 
 from abc import ABC, abstractmethod
 from typing import Optional, List
@@ -8,11 +8,15 @@ from app.domain.models.order_model import Order
 from app.infrastructure.configs.database_config import Session
 
 
-class IPedidoRepository(ABC):
-    """Interface para operações de Pedido"""
+class IOrderRepository(ABC):
+    """Interface para operações de Order"""
 
     @abstractmethod
-    def create(self, pedido: Order, session: Session) -> Order:
+    def create(self, order: Order, session: Session) -> Order:
+        pass
+
+    @abstractmethod
+    def create_order_with_items(self, order: Order, session: Session) -> Order:
         pass
 
     @abstractmethod
@@ -24,7 +28,7 @@ class IPedidoRepository(ABC):
         pass
 
     @abstractmethod
-    def update(self, pedido: Order, session: Session) -> Order:
+    def update(self, order: Order, session: Session) -> Order:
         pass
 
     @abstractmethod

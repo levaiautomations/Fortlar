@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from typing import Any, List, Optional
 from loguru import logger
 
-from app.application.usecases.impl.list_produtos_use_case import ListProductsUseCase
+from app.application.usecases.impl.list_products_use_case import ListProductsUseCase
 from app.infrastructure.configs.database_config import Session as DBSession
 
 # Use Cases
@@ -234,6 +234,106 @@ async def create_product(
             request = {
                 'file_path': tmp_path,
                 'file_format': 'csv' if is_csv else 'excel'
+            }
+            result = use_case.execute(request, session)
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=result
+            )
+        except HTTPException:
+            raise
+        except Exception as e:
+            # Transação já foi revertida no use case
+            logger.error(f"Erro no processamento: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro no processamento: {str(e)}"
+            )
+        finally:
+            # Remove arquivo temporário
+            if os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro no upload: {str(e)}"
+        )
+
+
+@produto_router.put(
+    "",
+    summary="Atualização completa de planilha Excel (limpa e recria tudo)",
+    description="Faz upload de planilha Excel e recria todos os produtos do zero. "
+                "**ATENÇÃO**: Este endpoint apaga TODOS os produtos, imagens do banco e imagens do Supabase antes de processar.",
+    response_model=BulkCreateResponse
+)
+async def update_all_products(
+        file: UploadFile = File(..., description="Arquivo CSV ou Excel com estrutura completa"),
+        session: DBSession = Depends(get_session),
+        current_user=Depends(verify_user_permission(role=RoleEnum.ADMIN))
+) -> Any:
+    """
+    Upload de planilha CSV ou Excel com limpeza completa antes de processar.
+    
+    **IMPORTANTE**: Este endpoint:
+    1. Apaga TODOS os produtos do banco de dados
+    2. Apaga TODAS as imagens de produtos do banco
+    3. Apaga TODAS as imagens do Supabase Storage (pasta produtos/)
+    4. Processa a planilha e cria tudo novamente
+    
+    Formatos suportados são os mesmos do POST:
+    
+    **CSV:**
+    - codigo, id_categoria, id_subcategoria, Nome, Quantidade, Descricao, Codigo Amarração, Vlr Bruto, Vlr Unitario
+    - Preços por região/prazo: Vista SP, 30 dias SP, 60 dias SP, Vista MG, 30 dias MG, 60 dias MG, Vista ES, 30 dias ES, 60 dias ES
+    
+    **Excel:**
+    - PRODUTO, CATEGORIA, SUBCATEGORIA, DESCRIÇÃO, REGIÃO, PRAZO DE ENTREGA, VALOR UNITÁRIO, KIT, OBSERVAÇÕES
+    
+    Use este endpoint quando quiser fazer uma atualização completa do catálogo.
+    """
+    try:
+        # Valida tipo de arquivo (mesma lógica do POST)
+        if not file.filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nome do arquivo é obrigatório"
+            )
+
+        file_ext = file.filename.lower()
+        is_csv = file_ext.endswith('.csv')
+        is_excel = file_ext.endswith(('.xlsx', '.xls'))
+
+        if not (is_csv or is_excel):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Arquivo deve ser .csv, .xlsx ou .xls"
+            )
+
+        suffix = '.csv' if is_csv else '.xlsx'
+
+        # Salva arquivo temporário
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            content = await file.read()
+            tmp.write(content)
+            tmp_path = tmp.name
+
+        try:
+            logger.info("Executando PUT: Limpeza completa e reprocessamento")
+            
+            # Executa use case com flag clean_before=True
+            use_case = CreateProductUseCase()
+            request = {
+                'file_path': tmp_path,
+                'file_format': 'csv' if is_csv else 'excel',
+                'clean_before': True  # Flag para limpar tudo antes
             }
             result = use_case.execute(request, session)
 

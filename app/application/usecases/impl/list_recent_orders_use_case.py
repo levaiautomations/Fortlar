@@ -5,15 +5,15 @@ from fastapi import HTTPException, status
 
 from app.application.usecases.use_case import UseCase
 from app.domain.models.order_model import Order
-from app.infrastructure.repositories.pedido_repository_interface import IPedidoRepository
-from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepositoryImpl
+from app.infrastructure.repositories.order_repository_interface import IOrderRepository
+from app.infrastructure.repositories.impl.order_repository_impl import OrderRepositoryImpl
 
 
-class ListPedidosRecentesUseCase(UseCase[Dict[str, Any], List[Dict[str, Any]]]):
+class ListRecentOrdersUseCase(UseCase[Dict[str, Any], List[Dict[str, Any]]]):
     """Use case para listar pedidos recentes"""
 
     def __init__(self):
-        self.pedido_repository: IPedidoRepository = PedidoRepositoryImpl()
+        self.pedido_repository: IOrderRepository = OrderRepositoryImpl()
 
     def execute(self, request: Dict[str, Any], session=None) -> List[Dict[str, Any]]:
         """Executa o caso de uso de listagem de pedidos recentes"""
@@ -28,7 +28,7 @@ class ListPedidosRecentesUseCase(UseCase[Dict[str, Any], List[Dict[str, Any]]]):
 
             pedidos = self.pedido_repository.get_recent_orders(days, session)
 
-            return [self._build_pedido_response(pedido) for pedido in pedidos]
+            return [self._build_pedido_response(order) for order in pedidos]
 
         except HTTPException:
             raise
@@ -38,15 +38,15 @@ class ListPedidosRecentesUseCase(UseCase[Dict[str, Any], List[Dict[str, Any]]]):
                 detail=f"Erro ao listar pedidos recentes: {str(e)}"
             )
 
-    def _build_pedido_response(self, pedido: Order) -> Dict[str, Any]:
-        """Constrói a resposta do pedido"""
+    def _build_pedido_response(self, order: Order) -> Dict[str, Any]:
+        """Constrói a resposta do order"""
         return {
-            "id": pedido.id,
-            "id_cliente": pedido.id_cliente,
-            "id_cupom": pedido.cupom_id,
-            "data_pedido": pedido.data_pedido.isoformat(),
-            "status": pedido.status.value,
-            "valor_total": float(pedido.valor_total),
-            "created_at": pedido.created_at.isoformat(),
-            "updated_at": pedido.updated_at.isoformat()
+            "id": order.id_pedido,
+            "id_cliente": order.id_cliente,
+            "id_cupom": order.id_cupom,
+            "data_pedido": order.data_pedido.isoformat(),
+            "status": order.status.value if order.status else None,
+            "valor_total": float(order.valor_total),
+            "created_at": order.created_at.isoformat(),
+            "updated_at": order.updated_at.isoformat()
         }

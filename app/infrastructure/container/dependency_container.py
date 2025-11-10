@@ -14,13 +14,13 @@ from app.application.usecases.impl.update_company_use_case import UpdateCompanyU
 from app.application.usecases.impl.delete_company_use_case import DeleteCompanyUseCase
 
 # Use Cases - Product
-from app.application.usecases.impl.list_produtos_use_case import ListProdutosUseCase
+from app.application.usecases.impl.list_products_use_case import ListProdutosUseCase
 from app.application.usecases.impl.bulk_create_produtos_use_case import BulkCreateProdutosUseCase
 
-# Use Cases - Pedido
-from app.application.usecases.impl.list_pedidos_use_case import ListPedidosUseCase
-from app.application.usecases.impl.get_pedido_use_case import GetPedidoUseCase
-from app.application.usecases.impl.list_pedidos_recentes_use_case import ListPedidosRecentesUseCase
+# Use Cases - Order
+from app.application.usecases.impl.list_orders_use_case import ListOrdersUseCase
+from app.application.usecases.impl.get_order_use_case import GetOrderUseCase
+from app.application.usecases.impl.list_recent_orders_use_case import ListOrdersRecentesUseCase
 
 # Use Cases - Auth
 from app.application.usecases.impl.login_use_case import LoginUseCase
@@ -42,7 +42,7 @@ from app.infrastructure.repositories.impl.contact_repository_impl import Contact
 from app.infrastructure.repositories.impl.address_repository_impl import AddressRepositoryImpl
 from app.infrastructure.repositories.impl.product_repository_impl import ProductRepositoryImpl
 from app.infrastructure.repositories.impl.category_repository_impl import CategoryRepositoryImpl
-from app.infrastructure.repositories.impl.pedido_repository_impl import PedidoRepositoryImpl
+from app.infrastructure.repositories.impl.order_repository_impl import OrderRepositoryImpl
 from app.infrastructure.repositories.impl.kit_repository_impl import KitRepository
 from app.infrastructure.repositories.impl.email_token_repository_impl import EmailTokenRepositoryImpl
 from app.infrastructure.repositories.impl.subcategory_repository_impl import SubcategoryRepositoryImpl
@@ -63,7 +63,7 @@ class DependencyContainer:
         self._address_repository = AddressRepositoryImpl()
         self._produto_repository = ProductRepositoryImpl()
         self._categoria_repository = CategoryRepositoryImpl()
-        self._pedido_repository = PedidoRepositoryImpl()
+        self._pedido_repository = OrderRepositoryImpl()
         self._kit_repository = KitRepository()
         self._email_token_repository = EmailTokenRepositoryImpl()
         self._subcategoria_repository = SubcategoryRepositoryImpl()
@@ -98,16 +98,16 @@ class DependencyContainer:
             produto_repository=self._produto_repository
         )
 
-        # Use Cases - Pedido
-        self._list_pedidos_use_case = ListPedidosUseCase(
+        # Use Cases - Order
+        self._list_pedidos_use_case = ListOrdersUseCase(
             pedido_repository=self._pedido_repository
         )
 
-        self._get_pedido_use_case = GetPedidoUseCase(
+        self._get_pedido_use_case = GetOrderUseCase(
             pedido_repository=self._pedido_repository
         )
 
-        self._list_pedidos_recentes_use_case = ListPedidosRecentesUseCase(
+        self._list_pedidos_recentes_use_case = ListOrdersRecentesUseCase(
             pedido_repository=self._pedido_repository
         )
 
@@ -171,17 +171,17 @@ class DependencyContainer:
     def list_produtos_use_case(self) -> ListProdutosUseCase:
         return self._list_produtos_use_case
 
-    # Pedido Use Cases
+    # Order Use Cases
     @property
-    def list_pedidos_use_case(self) -> ListPedidosUseCase:
+    def list_pedidos_use_case(self) -> ListOrdersUseCase:
         return self._list_pedidos_use_case
 
     @property
-    def get_pedido_use_case(self) -> GetPedidoUseCase:
+    def get_pedido_use_case(self) -> GetOrderUseCase:
         return self._get_pedido_use_case
 
     @property
-    def list_pedidos_recentes_use_case(self) -> ListPedidosRecentesUseCase:
+    def list_pedidos_recentes_use_case(self) -> ListOrdersRecentesUseCase:
         return self._list_pedidos_recentes_use_case
 
     # Auth Use Cases
@@ -256,7 +256,7 @@ class DependencyContainer:
         return self._categoria_repository
 
     @property
-    def pedido_repository(self) -> PedidoRepositoryImpl:
+    def pedido_repository(self) -> OrderRepositoryImpl:
         return self._pedido_repository
 
     @property

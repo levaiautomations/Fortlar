@@ -1,12 +1,12 @@
-"""DTOs para responses de pedidos"""
+"""DTOs para responses de orders"""
 
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 
 
-class ItemPedidoResponse(BaseModel):
-    """Response para item do pedido"""
+class OrderItemResponse(BaseModel):
+    """Response para item do order"""
     id: int
     id_produto: int
     quantidade: int
@@ -14,8 +14,8 @@ class ItemPedidoResponse(BaseModel):
     subtotal: float
 
 
-class PedidoResponse(BaseModel):
-    """Response para pedido"""
+class OrderResponse(BaseModel):
+    """Response para order"""
     id: int
     id_cliente: int
     id_cupom: Optional[int]
@@ -24,12 +24,13 @@ class PedidoResponse(BaseModel):
     valor_total: float
     created_at: datetime
     updated_at: datetime
-    itens: Optional[List[ItemPedidoResponse]] = None
+    itens: Optional[List[OrderItemResponse]] = None
 
 
-class ListPedidosResponse(BaseModel):
-    """Response para lista de pedidos"""
-    pedidos: List[PedidoResponse]
+class ListOrdersResponse(BaseModel):
+    """Response para lista de orders"""
+    orders: List[OrderResponse]
     total: int
     skip: int
     limit: int
+

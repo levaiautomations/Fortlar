@@ -1,12 +1,17 @@
 """Use case para upload completo de planilha CSV ou Excel com kits, regiões, prazos e produtos"""
 
-from typing import Dict, Any, List
+import io
+import datetime
+import pandas as pd
+from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 import logging
 
 from app.application.usecases.use_case import UseCase
 from app.application.service.excel_loader_service import ExcelLoaderService
+from app.application.service.drive_service import DriveService
+from app.application.service.supabase_service import SupabaseService
 from app.infrastructure.repositories.product_repository_interface import IProductRepository
 from app.infrastructure.repositories.category_repository_interface import ICategoryRepository
 from app.infrastructure.repositories.subcategory_repository_interface import ISubcategoryRepository
@@ -27,6 +32,8 @@ class CreateProductUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
     
     def __init__(self):
         self.loader = ExcelLoaderService()
+        self.drive_service = DriveService()
+        self.supabase_service = SupabaseService()
         self.product_repository: IProductRepository = ProductRepositoryImpl()
         self.category_repository: ICategoryRepository = CategoryRepositoryImpl()
         self.subcategory_repository: ISubcategoryRepository = SubcategoryRepositoryImpl()
@@ -37,7 +44,10 @@ class CreateProductUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
         Executa o upload completo da planilha
         
         Args:
-            request: Dicionário contendo 'file_path' e 'file_format' ('csv' ou 'excel')
+            request: Dicionário contendo:
+                - 'file_path': caminho do arquivo
+                - 'file_format': 'csv' ou 'excel'
+                - 'clean_before': True para limpar tudo antes (padrão: False)
             session: Sessão do banco de dados
             
         Returns:
@@ -52,6 +62,8 @@ class CreateProductUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
             )
 
         file_format = request.get('file_format', 'auto')
+        clean_before = request.get('clean_before', False)  # Nova flag para limpeza
+        
         self.loader.file_format = file_format
 
         summary = {
@@ -62,6 +74,13 @@ class CreateProductUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
             "imagens_created": 0,
             "errors": []
         }
+        
+        # Limpa todos os dados se solicitado
+        deleted_summary = {}
+        if clean_before:
+            logger.info("Modo PUT: Limpando todos os dados antes de processar")
+            deleted_summary = self._clean_all_data(session)
+            summary["deleted_summary"] = deleted_summary
 
         try:
             # Lê e valida a planilha
@@ -129,10 +148,22 @@ class CreateProductUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
                 detail=f"Erro ao processar planilha: {str(e)}"
             )
 
+        # Gera planilha atualizada com URLs do Supabase e faz upload
+        excel_url = None
+        try:
+            logger.info("Gerando planilha atualizada com URLs do Supabase")
+            excel_url = self._generate_updated_excel(file_path, df, detected_format, session)
+            if excel_url:
+                logger.info(f"Planilha atualizada salva no Supabase: {excel_url}")
+        except Exception as e:
+            logger.error(f"Erro ao gerar planilha atualizada: {e}", exc_info=True)
+            # Não falha o processo se houver erro na geração da planilha
+
         return {
             "success": True,
             "message": "Upload realizado com sucesso",
-            "summary": summary
+            "summary": summary,
+            "excel_url": excel_url
         }
 
     def _process_csv_format(
@@ -288,7 +319,10 @@ class CreateProductUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
 
     def _process_product_images(self, produto: Product, image_urls: List[str], session: Session, summary: Dict[str, Any]):
         """
-        Processa as imagens do produto, criando registros ProductImage.
+        Processa as imagens do produto:
+        1. Faz download das imagens do Google Drive
+        2. Faz upload para Supabase Storage
+        3. Salva a URL do Supabase no banco de dados
         Cada URL do array cria um objeto novo na tabela imagens_produto.
         """
         if not image_urls:
@@ -301,47 +335,116 @@ class CreateProductUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
             # Busca imagens existentes do produto usando o repository
             existing_images = self.product_image_repository.get_by_produto(produto.id_produto, session)
             
-            existing_urls = {img.url for img in existing_images}
             # Remove duplicatas mantendo a ordem (para logs consistentes)
             unique_urls = list(dict.fromkeys(image_urls))
             
             logger.debug(f"Produto {produto.codigo}: {len(existing_images)} imagem(ns) existente(s), {len(unique_urls)} URL(s) para processar")
             
             # Remove imagens que não estão mais na lista usando o repository
-            for img in existing_images:
-                if img.url not in unique_urls:
-                    self.product_image_repository.delete(img.id_imagem, session)
-                    logger.debug(f"Removendo imagem ID {img.id_imagem} (URL: '{img.url[:80]}...') do produto {produto.codigo}")
+            # Como agora salvamos URLs do Supabase, precisamos verificar se a URL do Drive corresponde
+            # Para isso, vamos processar todas as novas URLs e depois remover as que não foram processadas
+            processed_supabase_urls = set()
             
-            # Adiciona novas imagens - CADA URL cria um objeto novo na tabela imagens_produto usando o repository
+            # Adiciona novas imagens - Processa cada URL do Google Drive e faz upload para Supabase
             created_count = 0
-            for idx, url in enumerate(unique_urls, start=1):
-                url_clean = url.strip()
+            for idx, drive_url in enumerate(unique_urls, start=1):
+                drive_url_clean = drive_url.strip()
                 
                 # Valida URL básica
-                if not url_clean:
+                if not drive_url_clean:
                     logger.warning(f"URL vazia ignorada na posição {idx} para produto {produto.codigo}")
                     continue
                 
-                if not (url_clean.startswith('http://') or url_clean.startswith('https://') or url_clean.startswith('/')):
-                    logger.warning(f"URL de imagem inválida para produto {produto.codigo} (posição {idx}): {url_clean[:80]}...")
+                if not (drive_url_clean.startswith('http://') or drive_url_clean.startswith('https://')):
+                    logger.warning(f"URL de imagem inválida para produto {produto.codigo} (posição {idx}): {drive_url_clean[:80]}...")
                     continue
                 
-                # Verifica se já existe (usa o set em memória para performance)
-                if url_clean in existing_urls:
-                    logger.debug(f"URL já existe para produto {produto.codigo}, ignorando: {url_clean[:80]}...")
+                # Verifica se já existe uma imagem com esta URL do Drive processada anteriormente
+                # Como salvamos URLs do Supabase no banco, não podemos comparar diretamente
+                # Vamos processar todas as URLs e o banco evitará duplicatas por URL única
+                
+                try:
+                    # Converte link do Google Drive para formato de download
+                    download_url = self.drive_service.convert_drive_link(drive_url_clean)
+                    if not download_url:
+                        logger.error(f"Produto {produto.codigo}, Imagem {idx}: Não foi possível converter o link do Google Drive")
+                        summary["errors"].append({
+                            "type": "imagem",
+                            "product_codigo": produto.codigo,
+                            "error": f"Não foi possível converter link do Google Drive: {drive_url_clean[:50]}..."
+                        })
+                        continue
+                    
+                    # Faz download da imagem
+                    logger.info(f"Produto {produto.codigo}, Imagem {idx}: Fazendo download do Google Drive")
+                    image_bytes = self.drive_service.download_image(download_url)
+                    if not image_bytes:
+                        logger.error(f"Produto {produto.codigo}, Imagem {idx}: Falha no download da imagem")
+                        summary["errors"].append({
+                            "type": "imagem",
+                            "product_codigo": produto.codigo,
+                            "error": f"Falha no download da imagem: {download_url[:50]}..."
+                        })
+                        continue
+                    
+                    logger.info(f"Produto {produto.codigo}, Imagem {idx}: Download concluído ({len(image_bytes)} bytes)")
+                    
+                    # Define nome do arquivo no Supabase
+                    if len(unique_urls) == 1:
+                        file_name = f"{produto.codigo}.jpg"
+                    else:
+                        file_name = f"{produto.codigo}_{idx}.jpg"
+                    
+                    # Faz upload para o Supabase
+                    logger.info(f"Produto {produto.codigo}, Imagem {idx}: Fazendo upload para Supabase")
+                    supabase_url = self.supabase_service.upload_image(
+                        file_name=file_name,
+                        file_bytes=image_bytes,
+                        content_type="image/jpeg"
+                    )
+                    
+                    if not supabase_url:
+                        logger.error(f"Produto {produto.codigo}, Imagem {idx}: Não foi possível fazer upload no Supabase")
+                        summary["errors"].append({
+                            "type": "imagem",
+                            "product_codigo": produto.codigo,
+                            "error": f"Falha no upload para Supabase"
+                        })
+                        continue
+                    
+                    # Verifica se já existe esta URL do Supabase no banco
+                    existing_image = self.product_image_repository.get_by_url(supabase_url, session)
+                    if existing_image and existing_image.id_produto == produto.id_produto:
+                        logger.debug(f"URL do Supabase já existe para produto {produto.codigo}, ignorando: {supabase_url[:80]}...")
+                        processed_supabase_urls.add(supabase_url)
+                        continue
+                    
+                    # Salva a URL do Supabase no banco de dados
+                    product_image = ProductImage(
+                        id_produto=produto.id_produto,
+                        url=supabase_url  # Salva URL do Supabase, não do Google Drive
+                    )
+                    created_image = self.product_image_repository.create(product_image, session)
+                    created_count += 1
+                    summary["imagens_created"] += 1
+                    processed_supabase_urls.add(supabase_url)
+                    
+                    logger.info(f"Criado registro ProductImage ID {created_image.id_imagem} para produto {produto.codigo} - Supabase URL {idx}/{len(unique_urls)}: {supabase_url[:80]}...")
+                    
+                except Exception as e:
+                    logger.error(f"Erro ao processar imagem {idx} do produto {produto.codigo}: {e}", exc_info=True)
+                    summary["errors"].append({
+                        "type": "imagem",
+                        "product_codigo": produto.codigo,
+                        "error": f"Erro ao processar imagem {idx}: {str(e)}"
+                    })
                     continue
-                
-                # Cria um NOVO objeto ProductImage para esta URL usando o repository
-                product_image = ProductImage(
-                    id_produto=produto.id_produto,
-                    url=url_clean
-                )
-                created_image = self.product_image_repository.create(product_image, session)
-                created_count += 1
-                summary["imagens_created"] += 1
-                
-                logger.info(f"Criado registro ProductImage ID {created_image.id_imagem} para produto {produto.codigo} - URL {idx}/{len(unique_urls)}: {url_clean[:80]}...")
+            
+            # Remove imagens que não estão mais na lista (URLs do Supabase que não foram processadas)
+            for img in existing_images:
+                if img.url not in processed_supabase_urls:
+                    self.product_image_repository.delete(img.id_imagem, session)
+                    logger.debug(f"Removendo imagem ID {img.id_imagem} (URL: '{img.url[:80]}...') do produto {produto.codigo}")
             
             logger.info(f"Produto {produto.codigo}: {created_count} nova(s) imagem(ns) criada(s) em imagens_produto")
                         
@@ -352,6 +455,155 @@ class CreateProductUseCase(UseCase[Dict[str, Any], Dict[str, Any]]):
                 "product_codigo": produto.codigo,
                 "error": str(e)
             })
+
+    def _clean_all_data(self, session: Session) -> Dict[str, int]:
+        """
+        Limpa todos os dados de produtos e imagens do banco e Supabase
+        
+        Args:
+            session: Sessão do banco de dados
+            
+        Returns:
+            Dicionário com contadores do que foi deletado
+        """
+        deleted_counts = {
+            "produtos_deletados": 0,
+            "imagens_deletados": 0,
+            "imagens_supabase_deletadas": 0
+        }
+        
+        try:
+            logger.info("Iniciando limpeza de todos os dados de produtos")
+            
+            # 1. Busca todas as imagens para obter URLs do Supabase antes de deletar
+            all_images = self.product_image_repository.get_all(session, skip=0, limit=100000)
+            deleted_counts["imagens_deletados"] = len(all_images)
+            
+            logger.info(f"Encontradas {len(all_images)} imagem(ns) no banco de dados")
+            
+            # 2. Deleta todas as imagens do banco
+            for img in all_images:
+                self.product_image_repository.delete(img.id_imagem, session)
+            
+            logger.info(f"Deletadas {len(all_images)} imagem(ns) do banco de dados")
+            
+            # 3. Deleta todas as imagens do Supabase Storage (pasta produtos/)
+            logger.info("Deletando todas as imagens do Supabase Storage (pasta produtos/)")
+            try:
+                success = self.supabase_service.delete_all_images_in_folder("produtos")
+                if success:
+                    deleted_counts["imagens_supabase_deletadas"] = len(all_images)  # Aproximação
+                    logger.info("Imagens do Supabase deletadas com sucesso")
+                else:
+                    logger.warning("Alguns arquivos do Supabase podem não ter sido deletados")
+            except Exception as e:
+                logger.error(f"Erro ao deletar imagens do Supabase: {e}", exc_info=True)
+            
+            # 4. Deleta todos os produtos do banco
+            all_products = self.product_repository.get_all(session, skip=0, limit=100000)
+            deleted_counts["produtos_deletados"] = len(all_products)
+            
+            logger.info(f"Encontrados {len(all_products)} produto(s) no banco de dados")
+            
+            for product in all_products:
+                self.product_repository.delete(product.id_produto, session)
+            
+            logger.info(f"Deletados {len(all_products)} produto(s) do banco de dados")
+            
+            session.flush()
+            
+            logger.info(f"Limpeza concluída: {deleted_counts}")
+            return deleted_counts
+            
+        except Exception as e:
+            logger.error(f"Erro ao limpar dados: {e}", exc_info=True)
+            raise
+
+    def _generate_updated_excel(self, file_path: str, df_original: pd.DataFrame, format_type: str, session: Session) -> Optional[str]:
+        """
+        Gera planilha atualizada com URLs do Supabase e faz upload no Supabase Storage
+        
+        Args:
+            file_path: Caminho do arquivo original
+            df_original: DataFrame original da planilha
+            format_type: Tipo de formato ('csv' ou 'excel')
+            session: Sessão do banco de dados
+            
+        Returns:
+            URL do Excel no Supabase ou None em caso de erro
+        """
+        try:
+            logger.info("Iniciando geração de planilha atualizada com URLs do Supabase")
+            
+            # Cria cópia do DataFrame para modificar
+            df_updated = df_original.copy()
+            
+            # Adiciona coluna imagem_supabase se não existir
+            if 'imagem_supabase' not in df_updated.columns:
+                df_updated['imagem_supabase'] = ''
+            
+            # Identifica coluna de código do produto
+            codigo_col = None
+            for col in ['codigo', 'Codigo', 'CODIGO', 'PRODUTO']:
+                if col in df_updated.columns:
+                    codigo_col = col
+                    break
+            
+            if not codigo_col:
+                logger.warning("Coluna de código não encontrada, não é possível atualizar URLs")
+                return None
+            
+            # Para cada linha, busca URLs do Supabase do banco
+            for index, row in df_updated.iterrows():
+                try:
+                    codigo = str(row[codigo_col]).strip()
+                    if not codigo or codigo.lower() in ['nan', 'none', '']:
+                        continue
+                    
+                    # Busca produto no banco
+                    produto = self.product_repository.get_by_codigo(codigo, session)
+                    if not produto:
+                        continue
+                    
+                    # Busca imagens do produto no banco (já são URLs do Supabase)
+                    imagens = self.product_image_repository.get_by_produto(produto.id_produto, session)
+                    if imagens:
+                        # Formata como array: [url1, url2, url3]
+                        supabase_urls = [img.url for img in imagens]
+                        supabase_urls_str = '[' + ', '.join(supabase_urls) + ']'
+                        df_updated.at[index, 'imagem_supabase'] = supabase_urls_str
+                        logger.debug(f"Produto {codigo}: {len(supabase_urls)} URL(s) do Supabase adicionada(s)")
+                    
+                except Exception as e:
+                    logger.warning(f"Erro ao atualizar linha {index + 1}: {e}")
+                    continue
+            
+            # Gera novo arquivo Excel em memória
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df_updated.to_excel(writer, index=False, sheet_name='Produtos')
+            
+            output.seek(0)
+            result_bytes = output.read()
+            
+            logger.info(f"Arquivo Excel gerado: {len(result_bytes)} bytes")
+            
+            # Faz upload do Excel para o Supabase
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            excel_file_name = f"produtos_atualizados_{timestamp}.xlsx"
+            
+            logger.info(f"Fazendo upload do Excel atualizado para Supabase: {excel_file_name}")
+            excel_url = self.supabase_service.upload_file(
+                file_name=excel_file_name,
+                file_bytes=result_bytes,
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            
+            return excel_url
+            
+        except Exception as e:
+            logger.error(f"Erro ao gerar planilha atualizada: {e}", exc_info=True)
+            return None
 
     def _process_excel_format(
         self, produtos_data, session, summary,
