@@ -24,6 +24,8 @@ JWT_SECRET_KEY='sua_chave_secreta_aqui'
 JWT_ALGORITHM='HS256'
 JWT_EXPIRATION_MINUTES=60
 
+MAIL_USERNAME_ORDERS='sitefortlar@gmail.com'
+MAIL_USERNAME_ORDER='sitefortlar@gmail.com'  # Email para receber cópia dos orders
 
 MAIL_USERNAME='marcio.levada@exactaworks.com.br'
 MAIL_PASSWORD='uzzf gydt mliz ryey'

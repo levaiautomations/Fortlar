@@ -40,3 +40,4 @@ def validate_excel_file(filename: str) -> bool:
     valid_extensions = ['.xlsx', '.xls']
     return any(filename.lower().endswith(ext) for ext in valid_extensions)
 
+

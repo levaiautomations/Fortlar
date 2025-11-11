@@ -70,12 +70,27 @@ application = FastAPI(
         "url": "https://opensource.org/licenses/MIT",
     }
 )
+# Configuração de CORS
+# Permite múltiplas origens separadas por vírgula via variável de ambiente
+# Exemplo: CORS_ORIGINS=http://localhost:3000,https://app.seudominio.com
+cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000")
+cors_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+
+# Se não houver origens configuradas, permite todas (apenas para desenvolvimento)
+# Em produção, sempre defina CORS_ORIGINS com as origens específicas
+if not cors_origins:
+    cors_origins = ["*"]
+    allow_credentials = False  # Não pode usar credentials com wildcard
+else:
+    allow_credentials = True
+
 application.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=cors_origins,
+    allow_credentials=allow_credentials,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 

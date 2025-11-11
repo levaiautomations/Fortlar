@@ -15,13 +15,15 @@ class EmailService:
         self.mail_port = envs.MAIL_PORT
         self.use_tls = True
 
-    def send_email(self, recipient: str, template_html: str, subject: str):
+    def send_email(self, recipient: str, template_html: str, subject: str, cc: list = None):
         try:
             # Monta mensagem
             msg = EmailMessage()
             msg["Subject"] = subject
             msg["From"] = self.mail_from or self.username
             msg["To"] = recipient
+            if cc:
+                msg["Cc"] = ", ".join(cc)
             msg.set_content("Seu cliente de email não suporta HTML.")
             msg.add_alternative(template_html, subtype="html")
 
@@ -40,7 +42,10 @@ class EmailService:
                     server.login(self.username, self.password)
                     server.send_message(msg)
 
-            logger.info(f"✅ Email enviado para {recipient}")
+            if cc:
+                logger.info(f"✅ Email enviado para {recipient} com cópia para {', '.join(cc)}")
+            else:
+                logger.info(f"✅ Email enviado para {recipient}")
 
         except Exception as e:
             logger.error(f"❌ Erro ao enviar email: {e}")

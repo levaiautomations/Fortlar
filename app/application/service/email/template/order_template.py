@@ -101,7 +101,7 @@ def order_html(
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Order - Fortlar</title>
+        <title>Pedido - Fortlar</title>
         <style>
             body {{
                 font-family: Arial, sans-serif;

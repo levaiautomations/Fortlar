@@ -8,6 +8,7 @@ from decimal import Decimal
 from app.application.usecases.use_case import UseCase
 from app.application.service.email_service import EmailService
 from app.application.service.email.template.order_template import order_html
+import envs
 from app.domain.models.company_model import Company
 from app.domain.models.order_model import Order
 from app.domain.models.order_item_model import OrderItem
@@ -170,9 +171,20 @@ class SendOrderEmailUseCase(UseCase[SendOrderEmailUseCaseRequest, SendOrderEmail
         )
 
         subject = f"Novo Order - {company.nome_fantasia or company.razao_social} - Total: R$ {valor_total:.2f}"
-        self.email_service.send_email(email_empresa, html_email, subject)
         
-        logger.info(f"✅ Email de order enviado com sucesso para {email_empresa}")
+        # Prepara lista de cópias (CC)
+        cc_emails = []
+        mail_order_copy = envs.MAIL_USERNAME_ORDER
+        if mail_order_copy:
+            cc_emails.append(mail_order_copy)
+        
+        # Envia email com cópia se configurado
+        if cc_emails:
+            self.email_service.send_email(email_empresa, html_email, subject, cc=cc_emails)
+            logger.info(f"✅ Email de order enviado com sucesso para {email_empresa} com cópia para {', '.join(cc_emails)}")
+        else:
+            self.email_service.send_email(email_empresa, html_email, subject)
+            logger.info(f"✅ Email de order enviado com sucesso para {email_empresa}")
 
     def _create_order_entity(self, company_id: int, valor_total: Decimal) -> Order:
         """Cria a entidade Order"""
