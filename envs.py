@@ -7,10 +7,10 @@ load_dotenv()
 
 # Configurações do Banco de Dados
 # Banco de Dados (PostgreSQL)
-SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://postgres:postgres@localhost:5432/sistema_pedidos'
+SQLALCHEMY_DATABASE_URI='postgresql://postgres:%401234fortlar@db.zpcnvcthecltyiopstxd.supabase.co:5432/postgres'
 
 # Pool de Conexão
-SQLALCHEMY_POOL_SIZE=10
+SQLALCHEMY_POOL_SIZE=15
 SQLALCHEMY_MAX_OVERFLOW=20
 SQLALCHEMY_POOL_TIMEOUT=30
 SQLALCHEMY_POOL_RECYCLE=1800
@@ -20,16 +20,15 @@ SQLALCHEMY_POOL_PRE_PING=True
 SQLALCHEMY_SHOW_SQL=True
 
 # JWT
-JWT_SECRET_KEY='sua_chave_secreta_aqui'
+JWT_SECRET_KEY='D41D8CD98F00B204E9800998ECF8427E'
 JWT_ALGORITHM='HS256'
 JWT_EXPIRATION_MINUTES=60
 
-MAIL_USERNAME_ORDERS='sitefortlar@gmail.com'
-MAIL_USERNAME_ORDER='sitefortlar@gmail.com'  # Email para receber cópia dos orders
+MAIL_USERNAME_ORDER='vendas@fortlar.com.br'  # Email para receber cópia dos orders
 
-MAIL_USERNAME='marcio.levada@exactaworks.com.br'
-MAIL_PASSWORD='uzzf gydt mliz ryey'
-MAIL_FROM="marcio.levada@exactaworks.com.br"
+MAIL_USERNAME='sitefortlar@gmail.com'
+MAIL_PASSWORD='odil hbbe zsfp xpdy'
+MAIL_FROM="sitefortlar@gmail.com"
 MAIL_PORT=587
 MAIL_SERVER="smtp.gmail.com"
 
